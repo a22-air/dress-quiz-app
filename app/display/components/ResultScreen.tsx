@@ -83,48 +83,55 @@ export default function ResultScreen() {
 const styles = {
   container: {
     textAlign: "center" as const,
-    marginTop: "100px",
+    minHeight: "100vh",
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: "20px",
   },
+
   title: {
-    fontSize: "clamp(24px, 4vw, 48px)",
+    fontSize: "clamp(36px, 5vw, 72px)",
     marginBottom: "40px",
   },
+
   answerBox: {
     marginBottom: "40px",
   },
+
   answerText: {
-    fontSize: "24px",
+    fontSize: "clamp(20px, 2vw, 28px)",
   },
+
   color: {
-    fontSize: "64px",
+    fontSize: "clamp(60px, 8vw, 120px)",
     fontWeight: "bold",
     color: "red",
   },
+
   subText: {
-    fontSize: "20px",
+    fontSize: "clamp(18px, 1.8vw, 26px)",
     color: "#666",
   },
 
-  // 追加
   wrapper: {
     display: "flex",
     justifyContent: "center",
-    gap: "40px",
+    gap: "60px",
     marginTop: "40px",
   },
+
   scrollBox: {
-    width: "25vw",
-    height: "60vh",
-    maxWidth: "400px",
-    minWidth: "250px",
-    maxHeight: "600px",
-    minHeight: "300px",
+    width: "clamp(300px, 30vw, 500px)",
+    maxHeight: "60vh",
     overflow: "hidden",
     border: "1px solid #ccc",
   },
 
   name: {
-    padding: "5px",
+    padding: "10px",
+    fontSize: "clamp(18px, 1.5vw, 24px)",
     borderBottom: "1px solid #ccc",
   },
 };
