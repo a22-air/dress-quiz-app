@@ -1,13 +1,26 @@
+import ClosedScreen from "./components/CloseScreen"
+import ResultScreen from "./components/ResultScreen"
+import LotteryScreen from "./components/LotteryScreen"
+import WinnerScreen from "./components/WinnerScreen"
+
 export default function DisplayPage() {
-  const status = "closed"
+  const status = "winner" // ← ここ変えると画面切り替わる
 
   if (status === "closed") {
-    return <h1>結果発表！</h1>
+    return <ClosedScreen />
   }
 
   if (status === "result") {
-    return <h1>正解は赤！</h1>
+    return <ResultScreen />
   }
 
-  return <div>準備中</div>
+  if (status === "lottery") {
+    return <LotteryScreen />
+  }
+
+  if (status === "winner") {
+    return <WinnerScreen />
+  }
+
+  return <div>準備中...</div>
 }
