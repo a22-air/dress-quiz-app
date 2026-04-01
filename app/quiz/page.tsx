@@ -3,16 +3,24 @@
 import { useState } from "react"
 
 export default function QuizPage() {
-  const [selected, setSelected] = useState("")
+  const [name, setName] = useState("")
+  const [role, setRole] = useState("")
+  const [color, setColor] = useState("")
   const [submitted, setSubmitted] = useState(false)
 
-  const handleSubmit = () => {
-    if (!selected) {
-      alert("色を選んでください")
+  const handleSubmit = async () => {
+    if (!name || !role || !color) {
+      alert("すべて入力してください")
       return
     }
 
-    console.log("回答:", selected)
+    // 仮の送信（あとでAPIに接続）
+    console.log({
+      name,
+      role,
+      color,
+    })
+
     setSubmitted(true)
   }
 
@@ -22,21 +30,53 @@ export default function QuizPage() {
 
       {!submitted ? (
         <>
-          <p>ドレスの色を選んでください</p>
+          {/* 名前入力 */}
+          <h3>お名前</h3>
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="名前を入力"
+            style={styles.input}
+          />
 
-          <div>
-            {["赤", "青", "白", "黒"].map((color) => (
-              <label key={color} style={styles.option}>
-                <input
-                  type="radio"
-                  name="color"
-                  value={color}
-                  onChange={() => setSelected(color)}
-                />
-                {color}
-              </label>
-            ))}
-          </div>
+          {/* 新郎・新婦選択 */}
+          <h3>あなたはどちら側ですか？</h3>
+
+          <label style={styles.option}>
+            <input
+              type="radio"
+              name="role"
+              value="groom"
+              onChange={() => setRole("groom")}
+            />
+            新郎側
+          </label>
+
+          <label style={styles.option}>
+            <input
+              type="radio"
+              name="role"
+              value="bride"
+              onChange={() => setRole("bride")}
+            />
+            新婦側
+          </label>
+
+          {/* 色選択 */}
+          <h3>ドレスの色を選んでください</h3>
+
+          {["赤", "青", "白", "黒"].map((c) => (
+            <label key={c} style={styles.option}>
+              <input
+                type="radio"
+                name="color"
+                value={c}
+                onChange={() => setColor(c)}
+              />
+              {c}
+            </label>
+          ))}
 
           <button style={styles.button} onClick={handleSubmit}>
             回答する
@@ -56,6 +96,11 @@ const styles = {
   },
   title: {
     fontSize: "24px",
+    marginBottom: "20px",
+  },
+  input: {
+    padding: "10px",
+    width: "200px",
     marginBottom: "20px",
   },
   option: {
