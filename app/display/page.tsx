@@ -4,7 +4,7 @@ import LotteryScreen from "./components/LotteryScreen"
 import WinnerScreen from "./components/WinnerScreen"
 
 export default function DisplayPage() {
-  const status = "winner" // ← ここ変えると画面切り替わる
+  const status = "result" // ← ここ変えると画面切り替わる
 
   if (status === "closed") {
     return <ClosedScreen />
