@@ -11,14 +11,6 @@ export default function AdminPage() {
 
       <div style={styles.card}>
         <h2>ドレス色あてクイズ</h2>
-
-        <button
-          style={styles.button}
-          onClick={() => router.push("/admin/quiz")}
-        >
-          クイズ画面へ
-        </button>
-
         <button
           style={styles.button}
           onClick={() => router.push("/admin/result")}
