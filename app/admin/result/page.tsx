@@ -1,9 +1,20 @@
 "use client"
 
 import { useRouter } from "next/navigation"
+import { doc, updateDoc } from "firebase/firestore"
+import { db } from "@/app/lib/firebase"
 
 export default function ResultPage() {
   const router = useRouter()
+
+  const updatePhase = async (phase: string) => {
+  await updateDoc(
+    doc(db, "quizzes", "test-quiz", "state", "current"),
+      {
+        phase: phase
+      }
+    )
+  }
 
   return (
     <div style={styles.container}>
@@ -35,7 +46,10 @@ export default function ResultPage() {
       {/* 抽選ボタン */}
       <button
         style={styles.button}
-        onClick={() => router.push("/admin/lottery")}
+        onClick={async () => {
+          await updatePhase("lottery")
+          router.push("/admin/lottery")
+        }}
       >
         抽選スタート
       </button>

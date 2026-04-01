@@ -2,6 +2,8 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { doc, updateDoc } from "firebase/firestore"
+import { db } from "@/app/lib/firebase"
 
 export default function LotteryPage() {
   const router = useRouter()
@@ -13,26 +15,37 @@ export default function LotteryPage() {
   }>(null)
 
   const startLottery = () => {
-    setLoading(true)
+  setLoading(true)
 
-    // 仮の抽選（ランダム）
-    setTimeout(() => {
-      const groomList = ["山田太郎", "佐藤次郎", "鈴木一郎"]
-      const brideList = ["田中花子", "佐藤花子", "高橋美咲"]
+  setTimeout(async () => {
+    const groomList = ["山田太郎", "佐藤次郎", "鈴木一郎"]
+    const brideList = ["田中花子", "佐藤花子", "高橋美咲"]
 
-      const randomGroom =
-        groomList[Math.floor(Math.random() * groomList.length)]
-      const randomBride =
-        brideList[Math.floor(Math.random() * brideList.length)]
+    const randomGroom =
+      groomList[Math.floor(Math.random() * groomList.length)]
+    const randomBride =
+      brideList[Math.floor(Math.random() * brideList.length)]
 
-      setResult({
-        groom: randomGroom,
-        bride: randomBride,
-      })
+    setResult({
+      groom: randomGroom,
+      bride: randomBride,
+    })
 
-      setLoading(false)
+    setLoading(false)
+
+    // 🔥 ここ追加（winnerに切り替え）
+    await updatePhase("winner")
     }, 2000)
   }
+
+    const updatePhase = async (phase: string) => {
+      await updateDoc(
+        doc(db, "quizzes", "test-quiz", "state", "current"),
+        {
+          phase: phase
+        }
+      )
+    }
 
   return (
     <div style={styles.container}>
@@ -56,7 +69,10 @@ export default function LotteryPage() {
 
       <button
         style={styles.button}
-        onClick={() => router.push("/admin")}
+        onClick={async () => {
+          await updatePhase("closed")
+          router.push("/admin")
+        }}
       >
         管理画面へ戻る
       </button>

@@ -1,9 +1,24 @@
 "use client"
 
 import { useRouter } from "next/navigation"
+import { doc, updateDoc } from "firebase/firestore"
+import { db } from "@/app/lib/firebase"
 
 export default function AdminPage() {
   const router = useRouter()
+  const updatePhase = async (phase: string) => {
+      try {
+        await updateDoc(
+          doc(db, "quizzes", "test-quiz", "state", "current"),
+          {
+            phase: phase
+          }
+        )
+        console.log("更新成功:", phase)
+      } catch (error) {
+        console.error("更新エラー:", error)
+      }
+    }
 
   return (
     <div style={styles.container}>
@@ -13,14 +28,20 @@ export default function AdminPage() {
         <h2>ドレス色あてクイズ</h2>
         <button
           style={styles.button}
-          onClick={() => router.push("/admin/result")}
+          onClick={async () => {
+            await updatePhase("result")
+            router.push("admin/result")
+          }}
         >
           結果画面へ
         </button>
 
         <button
           style={styles.button}
-          onClick={() => router.push("/admin/lottery")}
+          onClick={async () => {
+            await updatePhase("lottery")
+            router.push("admin/lottery")
+          }}
         >
           抽選画面へ
         </button>
