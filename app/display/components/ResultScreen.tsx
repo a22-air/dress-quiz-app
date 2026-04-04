@@ -1,41 +1,84 @@
 "use client"
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react"
+import { collection, getDocs, doc, getDoc } from "firebase/firestore"
+import { db } from "@/app/lib/firebase"
 
-const groomWinners = ["山田太郎", "鈴木一郎", "田中次郎","山田太郎", "鈴木一郎", "田中次郎","山田太郎", "鈴木一郎", "田中次郎","鈴木一郎", "田中次郎","山田太郎", "鈴木一郎","山田太郎", "鈴木一郎", "田中次郎","山田太郎", "鈴木一郎", "田中次郎","山田太郎", "鈴木一郎",];
-const brideWinners = ["佐藤花子", "高橋美咲", "伊藤愛"];
+type Vote = {
+  name: string
+  group: string
+  answer: string
+}
 
 export default function ResultScreen() {
-  const groomRef = useRef<HTMLDivElement | null>(null);
-  const brideRef = useRef<HTMLDivElement | null>(null);
+  const groomRef = useRef<HTMLDivElement | null>(null)
+  const brideRef = useRef<HTMLDivElement | null>(null)
 
+  const [groomWinners, setGroomWinners] = useState<string[]>([])
+  const [brideWinners, setBrideWinners] = useState<string[]>([])
+  const [correctAnswer, setCorrectAnswer] = useState("")
+  const [total, setTotal] = useState(0)
+
+  // データ取得
+  useEffect(() => {
+    const fetchData = async () => {
+      const ref = doc(db, "quizzes", "test-quiz", "state", "current")
+      const snap = await getDoc(ref)
+
+      if (!snap.exists()) return
+
+      const correct = snap.data().correctAnswer
+      setCorrectAnswer(correct)
+
+      const snapshot = await getDocs(collection(db, "votes"))
+
+      const groom: string[] = []
+      const bride: string[] = []
+
+      snapshot.forEach((doc) => {
+        const data = doc.data() as Vote
+
+        if (data.answer === correct) {
+          if (data.group === "groom") {
+            groom.push(data.name)
+          } else {
+            bride.push(data.name)
+          }
+        }
+      })
+
+      setGroomWinners(groom)
+      setBrideWinners(bride)
+      setTotal(groom.length + bride.length)
+    }
+
+    fetchData()
+  }, [])
+
+  // スクロール
   useEffect(() => {
     const interval = setInterval(() => {
       if (groomRef.current) {
-        const el = groomRef.current;
-
-        // 一番下に到達したらリセット
+        const el = groomRef.current
         if (el.scrollTop + el.clientHeight >= el.scrollHeight) {
-          el.scrollTop = 0;
+          el.scrollTop = 0
         } else {
-          el.scrollTop += 1;
+          el.scrollTop += 1
         }
       }
 
       if (brideRef.current) {
-        const el = brideRef.current;
-
+        const el = brideRef.current
         if (el.scrollTop + el.clientHeight >= el.scrollHeight) {
-          el.scrollTop = 0;
+          el.scrollTop = 0
         } else {
-          el.scrollTop += 1;
+          el.scrollTop += 1
         }
       }
-    }, 30);
+    }, 30)
 
-    return () => clearInterval(interval);
-  }, []);
-
+    return () => clearInterval(interval)
+  }, [])
 
   return (
     <div style={styles.container}>
@@ -43,41 +86,38 @@ export default function ResultScreen() {
 
       <div style={styles.answerBox}>
         <p style={styles.answerText}>正解は</p>
-        <p style={styles.color}>赤色</p>
+        <p style={styles.color}>{correctAnswer}</p>
       </div>
 
-      <p style={styles.subText}>正解者：80名</p>
+      <p style={styles.subText}>正解者：{total}名</p>
 
-      {/* 新郎・新婦エリア */}
       <div style={styles.wrapper}>
-      {/* 新郎側 */}
-      <div>
-        <h3>新郎側</h3>
+        {/* 新郎側 */}
+        <div>
+          <h3>新郎側</h3>
+          <div ref={groomRef} style={styles.scrollBox}>
+            {groomWinners.map((name, index) => (
+              <p key={index} style={styles.name}>
+                {name}
+              </p>
+            ))}
+          </div>
+        </div>
 
-        <div ref={groomRef} style={styles.scrollBox}>
-          {groomWinners.map((name, index) => (
-            <p key={index} style={styles.name}>
-              {name}
-            </p>
-          ))}
+        {/* 新婦側 */}
+        <div>
+          <h3>新婦側</h3>
+          <div ref={brideRef} style={styles.scrollBox}>
+            {brideWinners.map((name, index) => (
+              <p key={index} style={styles.name}>
+                {name}
+              </p>
+            ))}
+          </div>
         </div>
       </div>
-
-      {/* 新婦側 */}
-      <div>
-        <h3>新婦側</h3>
-
-        <div ref={brideRef} style={styles.scrollBox}>
-          {brideWinners.map((name, index) => (
-            <p key={index} style={styles.name}>
-              {name}
-            </p>
-          ))}
-        </div>
-  </div>
-</div>
     </div>
-  );
+  )
 }
 
 const styles = {
