@@ -10,6 +10,8 @@ export default function WinnerScreen() {
   const [groom, setGroom] = useState("");
   const [bride, setBride] = useState("");
   const [show, setShow] = useState(false);
+  const [flash, setFlash] = useState(false);
+  const [dark, setDark] = useState(true);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -23,17 +25,17 @@ export default function WinnerScreen() {
     if (show) {
       const duration = 2000
       const end = Date.now() + duration
-    
+
       const interval = setInterval(() => {
         if (Date.now() > end) return clearInterval(interval)
-        
+
         confetti({
           particleCount: 5,
           angle: 60,
           spread: 55,
           origin: { x: 0 },
         })
-      
+
         confetti({
           particleCount: 5,
           angle: 120,
@@ -61,8 +63,34 @@ export default function WinnerScreen() {
     return () => unsubscribe();
   }, []);
 
+  useEffect(() => {
+    if (show) {
+      setFlash(true)
+
+      setTimeout(() => {
+        setFlash(false)
+      }, 300) // ← フラッシュ時間（短いほどリアル）
+    }
+  }, [show])
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDark(false)
+      setShow(true)
+    }, 1500)
+
+    return () => clearTimeout(timer)
+  }, [])
+
   return (
-    <div style={styles.container}>
+    <div
+      style={{
+        ...styles.container,
+      background: dark ? "#000" : flash ? "#fff" : "#fff",
+      color: dark ? "#fff" : "#000",
+      transition: "all 0.3s ease",
+      }}
+    >
   <h1 style={styles.title}>🎉 当選者発表 🎉</h1>
 
   <div style={styles.wrapper}>
