@@ -1,18 +1,33 @@
 "use client"
 
-import { useState } from "react"
-import { collection, addDoc, serverTimestamp } from "firebase/firestore"
+import { useState, useEffect } from "react"
+import { collection, addDoc, serverTimestamp, doc, getDoc } from "firebase/firestore"
 import { db } from "@/app/lib/firebase"
 
 export default function VotePage() {
   const [name, setName] = useState("")
   const [group, setGroup] = useState("groom")
-  const [answer, setAnswer] = useState("pink")
+  const [answer, setAnswer] = useState("")
+  const [choices, setChoices] = useState<string[]>([])
   const [submitted, setSubmitted] = useState(false)
 
+  useEffect(() => {
+    const fetchChoices = async () => {
+      const ref = doc(db, "quizzes", "test-quiz", "state", "current")
+      const snap = await getDoc(ref)
+
+      if (snap.exists()) {
+        const data = snap.data()
+        setChoices(data.choices || [])
+      }
+    }
+
+    fetchChoices()
+  }, [])
+
   const handleSubmit = async () => {
-    if (!name) {
-      alert("名前を入力してください")
+    if (!name || !answer) {
+      alert("名前と回答を入力してください")
       return
     }
 
@@ -53,9 +68,15 @@ export default function VotePage() {
 
       <div>
         <p>ドレスの色</p>
-        <button onClick={() => setAnswer("pink")}>ピンク</button>
-        <button onClick={() => setAnswer("blue")}>青</button>
-        <button onClick={() => setAnswer("white")}>白</button>
+
+        {choices.map((choice) => (
+          <button
+            key={choice}
+            onClick={() => setAnswer(choice)}
+          >
+            {choice}
+          </button>
+        ))}
       </div>
 
       <button onClick={handleSubmit}>投票する</button>
