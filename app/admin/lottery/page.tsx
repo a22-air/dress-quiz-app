@@ -155,7 +155,7 @@ export default function LotteryPage() {
               router.push("/admin");
             }}
           >
-            ← 管理画面へ
+            ← トップ画面へ戻る
           </button>
         </div>
       </div>

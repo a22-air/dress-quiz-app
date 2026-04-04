@@ -201,7 +201,7 @@ export default function ResultPage() {
         }}
         onClick={() => router.push("/admin")}
       >
-        ← 管理画面へ戻る
+        ← トップ画面へ戻る
       </button>
     </div>
   );
