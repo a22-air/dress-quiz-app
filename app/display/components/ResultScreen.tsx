@@ -18,6 +18,8 @@ export default function ResultScreen() {
   const [brideWinners, setBrideWinners] = useState<string[]>([]);
   const [correctAnswer, setCorrectAnswer] = useState("");
   const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [showList, setShowList] = useState(false);
 
   // データ取得
   useEffect(() => {
@@ -50,6 +52,8 @@ export default function ResultScreen() {
       setGroomWinners(groom);
       setBrideWinners(bride);
       setTotal(groom.length + bride.length);
+
+      setLoading(false);
     };
 
     fetchData();
@@ -57,6 +61,8 @@ export default function ResultScreen() {
 
   // スクロール
   useEffect(() => {
+    if (!showList) return;
+
     const interval = setInterval(() => {
       if (groomRef.current) {
         const el = groomRef.current;
@@ -78,7 +84,25 @@ export default function ResultScreen() {
     }, 30);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [showList]);
+
+  useEffect(() => {
+    if (loading) return;
+
+    const timer = setTimeout(() => {
+      setShowList(true);
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [loading]);
+
+  if (loading) {
+    return (
+      <div style={styles.container}>
+        <h1>集計中...</h1>
+      </div>
+    );
+  }
 
   return (
     <div style={styles.container}>
@@ -91,7 +115,15 @@ export default function ResultScreen() {
 
       <p style={styles.subText}>正解者：{total}名</p>
 
-      <div style={styles.wrapper}>
+      <div
+        style={{
+          ...styles.wrapper,
+          opacity: showList ? 1 : 0,
+          transform: showList ? "translateY(0)" : "translateY(30px)",
+          transition: "all 0.6s ease",
+          minHeight: "400px",
+        }}
+      >
         {/* 新郎側 */}
         <div>
           <h3>新郎側</h3>
@@ -123,12 +155,13 @@ export default function ResultScreen() {
 const styles = {
   container: {
     textAlign: "center" as const,
-    minHeight: "100vh",
+    height: "100vh",
     display: "flex",
     flexDirection: "column" as const,
     justifyContent: "center",
     alignItems: "center",
     padding: "20px",
+    overflow: "hidden"
   },
 
   title: {
@@ -160,11 +193,12 @@ const styles = {
     justifyContent: "center",
     gap: "60px",
     marginTop: "40px",
+    flex: 1,
   },
 
   scrollBox: {
     width: "clamp(300px, 30vw, 500px)",
-    maxHeight: "60vh",
+    maxHeight: "40vh",
     overflow: "hidden",
     border: "1px solid #ccc",
   },
