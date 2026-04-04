@@ -89,64 +89,238 @@ export default function LotteryPage() {
 
   return (
     <div style={styles.container}>
-      <h1 style={styles.title}>抽選</h1>
+      <div style={styles.ornament}>
+        <div style={styles.ornamentLine} />
+        <div style={styles.ornamentDiamond} />
+        <div style={{ ...styles.ornamentLine, ...styles.ornamentLineRight }} />
+      </div>
 
-      {/* 初期状態 */}
-      {!loading && !result && (
-        <button style={styles.button} onClick={startLottery}>
-          抽選スタート
-        </button>
-      )}
+      <h1 style={styles.mainTitle}>抽選</h1>
+      <p style={styles.subtitle}>新郎新婦専用ページ</p>
 
-      {/* 抽選中 */}
-      {loading && <p>🎲 抽選中…</p>}
-
-      {/* 結果表示 */}
-      {!loading && result && (
-        <>
-          <div style={styles.result}>
-            <h2>🎉 当選者</h2>
-            <p>新郎側：{result.groom}</p>
-            <p>新婦側：{result.bride}</p>
+      <div style={styles.stage}>
+        {/* 初期状態 */}
+        {!loading && !result && (
+          <div style={styles.card}>
+            <p style={styles.startText}>ボタンを押して抽選を開始してください</p>
+            <button style={styles.startButton} onClick={startLottery}>
+              抽選スタート
+            </button>
           </div>
+        )}
 
+        {/* 抽選中 */}
+        {loading && (
+          <div
+            style={{ ...styles.card, ...styles.darkCard, textAlign: "center" }}
+          >
+            <p style={styles.spinningText}>🎲 抽選中…</p>
+            <p style={styles.spinningSubText}>Drawing</p>
+          </div>
+        )}
+
+        {/* 結果表示 */}
+        {!loading && result && (
+          <div
+            style={{ ...styles.card, ...styles.darkCard, textAlign: "center" }}
+          >
+            <p style={styles.resultEyebrow}>🎉 当選者発表 — Winners</p>
+            <div style={styles.resultWinners}>
+              <div style={styles.winnerBlock}>
+                <p style={styles.winnerSide}>新郎側 / Groom</p>
+                <p style={styles.winnerNameBig}>{result.groom}</p>
+              </div>
+              <div style={styles.winnerBlock}>
+                <p style={styles.winnerSide}>新婦側 / Bride</p>
+                <p style={styles.winnerNameBig}>{result.bride}</p>
+              </div>
+            </div>
+            <p style={styles.congrats}>Congratulations</p>
+          </div>
+        )}
+
+        {/* ボタン行 */}
+        <div style={styles.actionRow}>
+          {!loading && result && (
+            <button style={styles.actionButton} onClick={startLottery}>
+              もう一度抽選
+            </button>
+          )}
           <button
-            style={styles.button}
+            style={styles.actionButton}
             onClick={async () => {
-              await updatePhase("closed");
+              if (!loading && result) {
+                await updatePhase("closed");
+              }
               router.push("/admin");
             }}
           >
-            管理画面へ戻る
+            ← 管理画面へ
           </button>
-        </>
-      )}
+        </div>
+      </div>
     </div>
   );
 }
 
-const styles = {
+const styles: { [key: string]: React.CSSProperties } = {
   container: {
-    padding: "20px",
-    textAlign: "center" as const,
+    minHeight: "100vh",
+    background:
+      "linear-gradient(160deg, #fdfcfa 0%, #f5f0e8 50%, #fdfcfa 100%)",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: "60px 24px",
   },
-  title: {
-    fontSize: "28px",
+  ornament: {
+    display: "flex",
+    alignItems: "center",
+    gap: "16px",
     marginBottom: "20px",
   },
-  button: {
-    margin: "10px",
-    padding: "12px 20px",
-    background: "#ff7aa2",
-    color: "#fff",
-    border: "none",
-    borderRadius: "8px",
-    cursor: "pointer",
+  ornamentLine: {
+    width: "60px",
+    height: "1px",
+    background: "linear-gradient(90deg, transparent, #c9a84c)",
   },
-  result: {
-    marginTop: "20px",
-    padding: "20px",
-    background: "#fff5f7",
-    borderRadius: "12px",
+  ornamentLineRight: {
+    background: "linear-gradient(90deg, #c9a84c, transparent)",
+  },
+  ornamentDiamond: {
+    width: "6px",
+    height: "6px",
+    background: "#c9a84c",
+    transform: "rotate(45deg)",
+  },
+  mainTitle: {
+    fontFamily: "'Cormorant Garamond', serif",
+    fontSize: "clamp(28px, 5vw, 42px)" as unknown as string,
+    fontWeight: 300,
+    color: "#1a1612",
+    letterSpacing: "0.12em",
+    textAlign: "center",
+    marginBottom: "8px",
+  },
+  subtitle: {
+    fontFamily: "'Zen Kaku Gothic New', sans-serif",
+    fontSize: "12px",
+    fontWeight: 300,
+    color: "#c9a84c",
+    letterSpacing: "0.3em",
+    textAlign: "center",
+    marginBottom: "48px",
+  },
+  stage: {
+    width: "100%",
+    maxWidth: "460px",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: "16px",
+  },
+  card: {
+    width: "100%",
+    background: "rgba(255,255,255,0.88)",
+    border: "1px solid rgba(201,168,76,0.18)",
+    borderRadius: "2px",
+    padding: "52px 48px",
+    textAlign: "center",
+    boxShadow: "0 4px 24px rgba(139,105,20,0.05)",
+  },
+  darkCard: {
+    background: "linear-gradient(135deg, #1a1612, #2d2318)",
+    border: "1px solid rgba(201,168,76,0.3)",
+  },
+  startText: {
+    fontFamily: "'Zen Kaku Gothic New', sans-serif",
+    fontSize: "12px",
+    fontWeight: 300,
+    color: "#9e9080",
+    letterSpacing: "0.15em",
+    marginBottom: "32px",
+  },
+  startButton: {
+    padding: "16px 48px",
+    background: "linear-gradient(135deg, #c9a84c, #e8c76a)",
+    border: "none",
+    cursor: "pointer",
+    fontFamily: "'Cormorant Garamond', serif",
+    fontSize: "18px",
+    fontWeight: 400,
+    color: "#1a1612",
+    letterSpacing: "0.2em",
+    boxShadow: "0 4px 16px rgba(139,105,20,0.2)",
+  },
+  spinningText: {
+    fontFamily: "'Cormorant Garamond', serif",
+    fontSize: "28px",
+    fontWeight: 300,
+    color: "#f0d98a",
+    letterSpacing: "0.2em",
+    marginBottom: "8px",
+  },
+  spinningSubText: {
+    fontFamily: "'Zen Kaku Gothic New', sans-serif",
+    fontSize: "10px",
+    color: "rgba(240,217,138,0.4)",
+    letterSpacing: "0.3em",
+  },
+  resultEyebrow: {
+    fontFamily: "'Zen Kaku Gothic New', sans-serif",
+    fontSize: "11px",
+    letterSpacing: "0.25em",
+    color: "rgba(201,168,76,0.8)",
+    marginBottom: "28px",
+  },
+  resultWinners: {
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr",
+    gap: "24px",
+    marginBottom: "20px",
+  },
+  winnerBlock: {
+    textAlign: "center",
+  },
+  winnerSide: {
+    fontFamily: "'Zen Kaku Gothic New', sans-serif",
+    fontSize: "9px",
+    fontWeight: 300,
+    color: "rgba(201,168,76,0.5)",
+    letterSpacing: "0.3em",
+    textTransform: "uppercase",
+    marginBottom: "8px",
+  },
+  winnerNameBig: {
+    fontFamily: "'Cormorant Garamond', serif",
+    fontSize: "26px",
+    fontWeight: 400,
+    color: "#f0d98a",
+    letterSpacing: "0.08em",
+  },
+  congrats: {
+    fontFamily: "'Cormorant Garamond', serif",
+    fontSize: "12px",
+    fontStyle: "italic",
+    color: "rgba(240,217,138,0.45)",
+    letterSpacing: "0.2em",
+  },
+  actionRow: {
+    display: "flex",
+    gap: "12px",
+    width: "100%",
+  },
+  actionButton: {
+    flex: 1,
+    padding: "14px",
+    background: "transparent",
+    border: "1px solid rgba(201,168,76,0.3)",
+    cursor: "pointer",
+    fontFamily: "'Zen Kaku Gothic New', sans-serif",
+    fontSize: "11px",
+    fontWeight: 300,
+    color: "#9e9080",
+    letterSpacing: "0.2em",
   },
 };

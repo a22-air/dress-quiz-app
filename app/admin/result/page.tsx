@@ -80,7 +80,9 @@ export default function ResultPage() {
         <div style={styles.ornament}>
           <div style={styles.ornamentLine} />
           <div style={styles.ornamentDiamond} />
-          <div style={{ ...styles.ornamentLine, ...styles.ornamentLineRight }} />
+          <div
+            style={{ ...styles.ornamentLine, ...styles.ornamentLineRight }}
+          />
         </div>
         <h1 style={styles.mainTitle}>結果発表</h1>
         <p style={styles.subtitle}>新郎新婦専用ページ</p>
@@ -90,7 +92,7 @@ export default function ResultPage() {
           <p style={styles.loadingSubText}>Calculating — 少々お待ちください</p>
         </div>
       </div>
-    )
+    );
   }
 
   return (
