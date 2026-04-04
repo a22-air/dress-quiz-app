@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { doc, onSnapshot } from "firebase/firestore";
 import { db } from "@/app/lib/firebase";
+// @ts-ignore
+import confetti from "canvas-confetti"
 
 export default function WinnerScreen() {
   const [groom, setGroom] = useState("");
@@ -16,6 +18,31 @@ export default function WinnerScreen() {
 
     return () => clearTimeout(timer);
   }, []);
+
+  useEffect(() => {
+    if (show) {
+      const duration = 2000
+      const end = Date.now() + duration
+    
+      const interval = setInterval(() => {
+        if (Date.now() > end) return clearInterval(interval)
+        
+        confetti({
+          particleCount: 5,
+          angle: 60,
+          spread: 55,
+          origin: { x: 0 },
+        })
+      
+        confetti({
+          particleCount: 5,
+          angle: 120,
+          spread: 55,
+          origin: { x: 1 },
+        })
+      }, 100)
+    }
+  }, [show])
 
   useEffect(() => {
     const ref = doc(db, "quizzes", "test-quiz", "state", "current");
