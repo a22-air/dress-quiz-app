@@ -194,12 +194,15 @@ export default function ResultPage() {
           bottom: "16px",
           right: "16px",
           zIndex: 1000,
-          backgroundColor: "#fff", // 背景を白に
-          padding: "8px 12px", // 余白
-          borderRadius: "8px", // 角丸
-          boxShadow: "0 2px 6px rgba(0,0,0,0.2)", // 影を付ける
+          backgroundColor: "#fff",
+          padding: "8px 12px",
+          borderRadius: "8px",
+          boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
         }}
-        onClick={() => router.push("/admin")}
+        onClick={async () => {
+          await updatePhase("closed");
+          router.push("/admin");
+        }}
       >
         ← トップ画面へ戻る
       </button>

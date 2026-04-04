@@ -149,9 +149,7 @@ export default function LotteryPage() {
           <button
             style={styles.actionButton}
             onClick={async () => {
-              if (!loading && result) {
                 await updatePhase("closed");
-              }
               router.push("/admin");
             }}
           >
