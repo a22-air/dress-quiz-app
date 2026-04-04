@@ -1,9 +1,119 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { doc, onSnapshot } from "firebase/firestore";
+import { db } from "@/app/lib/firebase";
+
 export default function WinnerScreen() {
+  const [groom, setGroom] = useState("");
+  const [bride, setBride] = useState("");
+  const [show, setShow] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShow(true);
+    }, 1500); // ← 1.5秒ためる
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    const ref = doc(db, "quizzes", "test-quiz", "state", "current");
+
+    const unsubscribe = onSnapshot(ref, (snap) => {
+      if (!snap.exists()) return;
+
+      const data = snap.data().winners;
+
+      if (data) {
+        setGroom(data.groom);
+        setBride(data.bride);
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
   return (
-    <div className="text-center mt-20">
-      <h1 className="text-4xl mb-6">当選者発表！</h1>
-      <p className="text-3xl font-bold">田中 太郎さん</p>
-      <p className="mt-6 text-xl">おめでとうございます！</p>
+    <div style={styles.container}>
+  <h1 style={styles.title}>🎉 当選者発表 🎉</h1>
+
+  <div style={styles.wrapper}>
+    {/* 新郎 */}
+    <div style={styles.card}>
+      <h2>新郎側</h2>
+      <p
+        style={{
+          ...styles.name,
+          opacity: show ? 1 : 0,
+          transform: show ? "scale(1)" : "scale(0.5)",
+        }}
+      >
+        {groom}
+      </p>
     </div>
-  )
+
+    {/* 新婦 */}
+    <div style={styles.card}>
+      <h2>新婦側</h2>
+      <p
+        style={{
+          ...styles.name,
+          opacity: show ? 1 : 0,
+          transform: show ? "scale(1)" : "scale(0.5)",
+        }}
+      >
+        {bride}
+      </p>
+    </div>
+  </div>
+
+  <p style={styles.message}>おめでとうございます！</p>
+</div>
+  );
 }
+
+const styles = {
+  container: {
+    textAlign: "center" as const,
+    minHeight: "100vh",
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  title: {
+    fontSize: "clamp(36px, 5vw, 72px)",
+    marginBottom: "60px",
+  },
+
+  wrapper: {
+    display: "flex",
+    gap: "80px",
+    marginBottom: "40px",
+  },
+
+  card: {
+    background: "#fff5f7",
+    padding: "40px",
+    borderRadius: "20px",
+    minWidth: "300px",
+  },
+
+  group: {
+    fontSize: "24px",
+    marginBottom: "20px",
+  },
+
+  name: {
+    fontSize: "clamp(40px, 4vw, 64px)",
+  fontWeight: "bold",
+  transition: "all 0.5s ease",
+  },
+
+  message: {
+    fontSize: "24px",
+    marginTop: "20px",
+  },
+};
