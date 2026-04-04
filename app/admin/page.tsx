@@ -1,32 +1,31 @@
-"use client"
+"use client";
 
-import { useRouter } from "next/navigation"
-import { doc, updateDoc } from "firebase/firestore"
-import { db } from "@/app/lib/firebase"
+import { useRouter } from "next/navigation";
+import { doc, updateDoc } from "firebase/firestore";
+import { db } from "@/app/lib/firebase";
 
 export default function AdminPage() {
-  const router = useRouter()
+  const router = useRouter();
   const updatePhase = async (phase: string) => {
-      try {
-        await updateDoc(
-          doc(db, "quizzes", "test-quiz", "state", "current"),
-          {
-            phase: phase
-          }
-        )
-        console.log("更新成功:", phase)
-      } catch (error) {
-        console.error("更新エラー:", error)
-      }
+    try {
+      await updateDoc(doc(db, "quizzes", "test-quiz", "state", "current"), {
+        phase: phase,
+      });
+      console.log("更新成功:", phase);
+    } catch (error) {
+      console.error("更新エラー:", error);
     }
+  };
 
   return (
-<>
+    <>
       <div style={styles.container}>
         <div style={styles.ornament}>
           <div style={styles.ornamentLine} />
           <div style={styles.ornamentDiamond} />
-          <div style={{ ...styles.ornamentLine, ...styles.ornamentLineRight }} />
+          <div
+            style={{ ...styles.ornamentLine, ...styles.ornamentLineRight }}
+          />
         </div>
 
         <h1 style={styles.mainTitle}>ドレス色あてクイズ</h1>
@@ -39,11 +38,22 @@ export default function AdminPage() {
             <button
               style={styles.navButton}
               onClick={async () => {
-            await updatePhase("result")
-            router.push("admin/result")
-          }}
-              onMouseEnter={e => Object.assign((e.target as HTMLElement).style, styles.navButtonHover)}
-              onMouseLeave={e => Object.assign((e.target as HTMLElement).style, { borderColor: "rgba(201,168,76,0.25)", transform: "none", boxShadow: "none" })}
+                await updatePhase("result");
+                router.push("admin/result");
+              }}
+              onMouseEnter={(e) =>
+                Object.assign(
+                  (e.target as HTMLElement).style,
+                  styles.navButtonHover
+                )
+              }
+              onMouseLeave={(e) =>
+                Object.assign((e.target as HTMLElement).style, {
+                  borderColor: "rgba(201,168,76,0.25)",
+                  transform: "none",
+                  boxShadow: "none",
+                })
+              }
             >
               <div style={styles.navButtonContent}>
                 <span style={styles.navButtonLabel}>Result</span>
@@ -54,12 +64,23 @@ export default function AdminPage() {
 
             <button
               style={{ ...styles.navButton, marginBottom: 0 }}
-               onClick={async () => {
-            await updatePhase("lottery")
-            router.push("admin/lottery")
-          }}
-              onMouseEnter={e => Object.assign((e.target as HTMLElement).style, styles.navButtonHover)}
-              onMouseLeave={e => Object.assign((e.target as HTMLElement).style, { borderColor: "rgba(201,168,76,0.25)", transform: "none", boxShadow: "none" })}
+              onClick={async () => {
+                await updatePhase("lottery");
+                router.push("admin/lottery");
+              }}
+              onMouseEnter={(e) =>
+                Object.assign(
+                  (e.target as HTMLElement).style,
+                  styles.navButtonHover
+                )
+              }
+              onMouseLeave={(e) =>
+                Object.assign((e.target as HTMLElement).style, {
+                  borderColor: "rgba(201,168,76,0.25)",
+                  transform: "none",
+                  boxShadow: "none",
+                })
+              }
             >
               <div style={styles.navButtonContent}>
                 <span style={styles.navButtonLabel}>Lottery</span>
@@ -77,16 +98,14 @@ export default function AdminPage() {
         </div>
       </div>
     </>
-
-    
-  )
-
+  );
 }
 
 const styles: { [key: string]: React.CSSProperties } = {
   container: {
     minHeight: "100vh",
-    background: "linear-gradient(160deg, #fdfcfa 0%, #f5f0e8 50%, #fdfcfa 100%)",
+    background:
+      "linear-gradient(160deg, #fdfcfa 0%, #f5f0e8 50%, #fdfcfa 100%)",
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
@@ -143,7 +162,8 @@ const styles: { [key: string]: React.CSSProperties } = {
     width: "100%",
     maxWidth: "440px",
     position: "relative",
-    boxShadow: "0 4px 24px rgba(139,105,20,0.06), 0 1px 4px rgba(139,105,20,0.04)",
+    boxShadow:
+      "0 4px 24px rgba(139,105,20,0.06), 0 1px 4px rgba(139,105,20,0.04)",
   },
   cardInner: {
     position: "relative",
@@ -220,4 +240,4 @@ const styles: { [key: string]: React.CSSProperties } = {
     color: "rgba(201,168,76,0.5)",
     letterSpacing: "0.2em",
   },
-}
+};
