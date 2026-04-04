@@ -125,7 +125,7 @@ const styles = {
     textAlign: "center" as const,
     minHeight: "100vh",
     display: "flex",
-    flexDirection: "column",
+    flexDirection: "column" as const,
     justifyContent: "center",
     alignItems: "center",
     padding: "20px",

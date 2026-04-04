@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { doc, onSnapshot } from "firebase/firestore";
 import { db } from "@/app/lib/firebase";
 // @ts-ignore
-import confetti from "canvas-confetti"
+import confetti from "canvas-confetti";
 
 export default function WinnerScreen() {
   const [groom, setGroom] = useState("");
@@ -23,28 +23,28 @@ export default function WinnerScreen() {
 
   useEffect(() => {
     if (show) {
-      const duration = 2000
-      const end = Date.now() + duration
+      const duration = 2000;
+      const end = Date.now() + duration;
 
       const interval = setInterval(() => {
-        if (Date.now() > end) return clearInterval(interval)
+        if (Date.now() > end) return clearInterval(interval);
 
         confetti({
           particleCount: 5,
           angle: 60,
           spread: 55,
           origin: { x: 0 },
-        })
+        });
 
         confetti({
           particleCount: 5,
           angle: 120,
           spread: 55,
           origin: { x: 1 },
-        })
-      }, 100)
+        });
+      }, 100);
     }
-  }, [show])
+  }, [show]);
 
   useEffect(() => {
     const ref = doc(db, "quizzes", "test-quiz", "state", "current");
@@ -65,66 +65,66 @@ export default function WinnerScreen() {
 
   useEffect(() => {
     if (show) {
-      setFlash(true)
+      setFlash(true);
 
       setTimeout(() => {
-        setFlash(false)
-      }, 300) // ← フラッシュ時間（短いほどリアル）
+        setFlash(false);
+      }, 300); // ← フラッシュ時間（短いほどリアル）
     }
-  }, [show])
+  }, [show]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      setDark(false)
-      setShow(true)
-    }, 1500)
+      setDark(false);
+      setShow(true);
+    }, 1500);
 
-    return () => clearTimeout(timer)
-  }, [])
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
     <div
       style={{
         ...styles.container,
-      background: dark ? "#000" : flash ? "#fff" : "#fff",
-      color: dark ? "#fff" : "#000",
-      transition: "all 0.3s ease",
+        background: dark ? "#000" : flash ? "#fff" : "#fff",
+        color: dark ? "#fff" : "#000",
+        transition: "all 0.3s ease",
       }}
     >
-  <h1 style={styles.title}>🎉 当選者発表 🎉</h1>
+      <h1 style={styles.title}>🎉 当選者発表 🎉</h1>
 
-  <div style={styles.wrapper}>
-    {/* 新郎 */}
-    <div style={styles.card}>
-      <h2>新郎側</h2>
-      <p
-        style={{
-          ...styles.name,
-          opacity: show ? 1 : 0,
-          transform: show ? "scale(1)" : "scale(0.5)",
-        }}
-      >
-        {groom}
-      </p>
+      <div style={styles.wrapper}>
+        {/* 新郎 */}
+        <div style={styles.card}>
+          <h2>新郎側</h2>
+          <p
+            style={{
+              ...styles.name,
+              opacity: show ? 1 : 0,
+              transform: show ? "scale(1)" : "scale(0.5)",
+            }}
+          >
+            {groom}
+          </p>
+        </div>
+
+        {/* 新婦 */}
+        <div style={styles.card}>
+          <h2>新婦側</h2>
+          <p
+            style={{
+              ...styles.name,
+              opacity: show ? 1 : 0,
+              transform: show ? "scale(1)" : "scale(0.5)",
+            }}
+          >
+            {bride}
+          </p>
+        </div>
+      </div>
+
+      <p style={styles.message}>おめでとうございます！</p>
     </div>
-
-    {/* 新婦 */}
-    <div style={styles.card}>
-      <h2>新婦側</h2>
-      <p
-        style={{
-          ...styles.name,
-          opacity: show ? 1 : 0,
-          transform: show ? "scale(1)" : "scale(0.5)",
-        }}
-      >
-        {bride}
-      </p>
-    </div>
-  </div>
-
-  <p style={styles.message}>おめでとうございます！</p>
-</div>
   );
 }
 
@@ -133,7 +133,7 @@ const styles = {
     textAlign: "center" as const,
     minHeight: "100vh",
     display: "flex",
-    flexDirection: "column",
+    flexDirection: "column" as const,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -163,8 +163,8 @@ const styles = {
 
   name: {
     fontSize: "clamp(40px, 4vw, 64px)",
-  fontWeight: "bold",
-  transition: "all 0.5s ease",
+    fontWeight: "bold",
+    transition: "all 0.5s ease",
   },
 
   message: {
