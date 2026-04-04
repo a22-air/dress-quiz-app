@@ -18,6 +18,7 @@ export default function ResultPage() {
   const [correctUsers, setCorrectUsers] = useState<Vote[]>([])
   const [wrongUsers, setWrongUsers] = useState<Vote[]>([])
   const [correctAnswer, setCorrectAnswer] = useState("")
+  const [loading, setLoading] = useState(true)
 
   const updatePhase = async (phase: string) => {
     await updateDoc(
@@ -55,6 +56,8 @@ export default function ResultPage() {
       setCorrectAnswer(correctAnswer)
       setCorrectUsers(correct)
       setWrongUsers(wrong)
+
+      setLoading(false)
     }
 
     fetchData()
@@ -77,6 +80,14 @@ export default function ResultPage() {
     }
     countByAnswer[user.answer]++
   })
+
+  if (loading) {
+    return (
+      <div style={styles.container}>
+        <h2>🎉 集計中...</h2>
+      </div>
+    )
+  }
 
   return (
     <div style={styles.container}>
