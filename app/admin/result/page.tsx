@@ -59,6 +59,15 @@ export default function ResultPage() {
     (u) => u.group === "bride"
   )
 
+  const countByAnswer: { [key: string]: number } = {}
+
+  wrongUsers.forEach((user) => {
+    if (!countByAnswer[user.answer]) {
+      countByAnswer[user.answer] = 0
+    }
+    countByAnswer[user.answer]++
+  })
+
   return (
     <div style={styles.container}>
       <h1 style={styles.title}>結果発表</h1>
@@ -102,11 +111,21 @@ export default function ResultPage() {
       {/* 不正解者 */}
       <div style={styles.card}>
         <h3>残念…不正解</h3>
-
-        {wrongUsers.map((user, index) => (
-          <p key={index}>
-            {user.name}（{user.answer}）
-          </p>
+        
+        {Object.entries(countByAnswer).map(([answer, count]) => (
+          <div key={answer} style={{ marginBottom: "10px" }}>
+            <p>
+              {answer}：{count}人
+            </p>
+        
+            <ul>
+              {wrongUsers
+                .filter((user) => user.answer === answer)
+                .map((user, index) => (
+                  <li key={index}>{user.name}</li>
+                ))}
+            </ul>
+          </div>
         ))}
       </div>
     </div>
