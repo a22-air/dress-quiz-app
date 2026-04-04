@@ -126,7 +126,7 @@ export default function ResultPage() {
           router.push("/admin/lottery")
         }}
       >
-        抽選スタート
+        抽選画面へ
       </button>
 
       {/* 不正解者 */}
