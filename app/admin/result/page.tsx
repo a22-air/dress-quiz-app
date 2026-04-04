@@ -1,20 +1,63 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { doc, updateDoc } from "firebase/firestore"
+import { useEffect, useState } from "react"
+import { doc, updateDoc, collection, getDocs } from "firebase/firestore"
 import { db } from "@/app/lib/firebase"
+
+type Vote = {
+  name: string
+  group: string
+  answer: string
+}
 
 export default function ResultPage() {
   const router = useRouter()
 
+  const [correctUsers, setCorrectUsers] = useState<Vote[]>([])
+  const [wrongUsers, setWrongUsers] = useState<Vote[]>([])
+
   const updatePhase = async (phase: string) => {
-  await updateDoc(
-    doc(db, "quizzes", "test-quiz", "state", "current"),
+    await updateDoc(
+      doc(db, "quizzes", "test-quiz", "state", "current"),
       {
         phase: phase
       }
     )
   }
+
+  useEffect(() => {
+    const fetchVotes = async () => {
+      const snapshot = await getDocs(collection(db, "votes"))
+
+      const correct: Vote[] = []
+      const wrong: Vote[] = []
+
+      snapshot.forEach((doc) => {
+        const data = doc.data() as Vote
+
+        if (data.answer === "pink") {
+          correct.push(data)
+        } else {
+          wrong.push(data)
+        }
+      })
+
+      setCorrectUsers(correct)
+      setWrongUsers(wrong)
+    }
+
+    fetchVotes()
+  }, [])
+
+  // グループ分け
+  const groomCorrect = correctUsers.filter(
+    (u) => u.group === "groom"
+  )
+
+  const brideCorrect = correctUsers.filter(
+    (u) => u.group === "bride"
+  )
 
   return (
     <div style={styles.container}>
@@ -23,7 +66,7 @@ export default function ResultPage() {
       {/* 正解 */}
       <div style={styles.card}>
         <h2>正解は 💖 ピンク</h2>
-        <p>正解者は 5名です！</p>
+        <p>正解者は {correctUsers.length} 名です！</p>
       </div>
 
       {/* 正解者 */}
@@ -32,14 +75,16 @@ export default function ResultPage() {
 
         <h4>新郎側</h4>
         <ul>
-          <li>山田 太郎</li>
-          <li>佐藤 次郎</li>
+          {groomCorrect.map((user, index) => (
+            <li key={index}>{user.name}</li>
+          ))}
         </ul>
 
         <h4>新婦側</h4>
         <ul>
-          <li>田中 花子</li>
-          <li>鈴木 美咲</li>
+          {brideCorrect.map((user, index) => (
+            <li key={index}>{user.name}</li>
+          ))}
         </ul>
       </div>
 
@@ -58,20 +103,11 @@ export default function ResultPage() {
       <div style={styles.card}>
         <h3>残念…不正解</h3>
 
-        <p>ドレスA（青）：3名</p>
-        <ul>
-          <li>山田 一郎</li>
-        </ul>
-
-        <p>ドレスB（白）：2名</p>
-        <ul>
-          <li>田中 次郎</li>
-        </ul>
-
-        <p>ドレスC（その他）：1名</p>
-        <ul>
-          <li>佐藤 花子</li>
-        </ul>
+        {wrongUsers.map((user, index) => (
+          <p key={index}>
+            {user.name}（{user.answer}）
+          </p>
+        ))}
       </div>
     </div>
   )
