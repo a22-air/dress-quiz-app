@@ -1,84 +1,84 @@
-"use client"
+"use client";
 
-import { useEffect, useRef, useState } from "react"
-import { collection, getDocs, doc, getDoc } from "firebase/firestore"
-import { db } from "@/app/lib/firebase"
+import { useEffect, useRef, useState } from "react";
+import { collection, getDocs, doc, getDoc } from "firebase/firestore";
+import { db } from "@/app/lib/firebase";
 
 type Vote = {
-  name: string
-  group: string
-  answer: string
-}
+  name: string;
+  group: string;
+  answer: string;
+};
 
 export default function ResultScreen() {
-  const groomRef = useRef<HTMLDivElement | null>(null)
-  const brideRef = useRef<HTMLDivElement | null>(null)
+  const groomRef = useRef<HTMLDivElement | null>(null);
+  const brideRef = useRef<HTMLDivElement | null>(null);
 
-  const [groomWinners, setGroomWinners] = useState<string[]>([])
-  const [brideWinners, setBrideWinners] = useState<string[]>([])
-  const [correctAnswer, setCorrectAnswer] = useState("")
-  const [total, setTotal] = useState(0)
+  const [groomWinners, setGroomWinners] = useState<string[]>([]);
+  const [brideWinners, setBrideWinners] = useState<string[]>([]);
+  const [correctAnswer, setCorrectAnswer] = useState("");
+  const [total, setTotal] = useState(0);
 
   // データ取得
   useEffect(() => {
     const fetchData = async () => {
-      const ref = doc(db, "quizzes", "test-quiz", "state", "current")
-      const snap = await getDoc(ref)
+      const ref = doc(db, "quizzes", "test-quiz", "state", "current");
+      const snap = await getDoc(ref);
 
-      if (!snap.exists()) return
+      if (!snap.exists()) return;
 
-      const correct = snap.data().correctAnswer
-      setCorrectAnswer(correct)
+      const correct = snap.data().correctAnswer;
+      setCorrectAnswer(correct);
 
-      const snapshot = await getDocs(collection(db, "votes"))
+      const snapshot = await getDocs(collection(db, "votes"));
 
-      const groom: string[] = []
-      const bride: string[] = []
+      const groom: string[] = [];
+      const bride: string[] = [];
 
       snapshot.forEach((doc) => {
-        const data = doc.data() as Vote
+        const data = doc.data() as Vote;
 
         if (data.answer === correct) {
           if (data.group === "groom") {
-            groom.push(data.name)
+            groom.push(data.name);
           } else {
-            bride.push(data.name)
+            bride.push(data.name);
           }
         }
-      })
+      });
 
-      setGroomWinners(groom)
-      setBrideWinners(bride)
-      setTotal(groom.length + bride.length)
-    }
+      setGroomWinners(groom);
+      setBrideWinners(bride);
+      setTotal(groom.length + bride.length);
+    };
 
-    fetchData()
-  }, [])
+    fetchData();
+  }, []);
 
   // スクロール
   useEffect(() => {
     const interval = setInterval(() => {
       if (groomRef.current) {
-        const el = groomRef.current
+        const el = groomRef.current;
         if (el.scrollTop + el.clientHeight >= el.scrollHeight) {
-          el.scrollTop = 0
+          el.scrollTop = 0;
         } else {
-          el.scrollTop += 1
+          el.scrollTop += 1;
         }
       }
 
       if (brideRef.current) {
-        const el = brideRef.current
+        const el = brideRef.current;
         if (el.scrollTop + el.clientHeight >= el.scrollHeight) {
-          el.scrollTop = 0
+          el.scrollTop = 0;
         } else {
-          el.scrollTop += 1
+          el.scrollTop += 1;
         }
       }
-    }, 30)
+    }, 30);
 
-    return () => clearInterval(interval)
-  }, [])
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div style={styles.container}>
@@ -117,7 +117,7 @@ export default function ResultScreen() {
         </div>
       </div>
     </div>
-  )
+  );
 }
 
 const styles = {
