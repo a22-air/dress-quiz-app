@@ -1,83 +1,128 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { doc, updateDoc } from "firebase/firestore"
-import { db } from "@/app/lib/firebase"
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import {
+  doc,
+  updateDoc,
+  getDoc,
+  getDocs,
+  collection,
+} from "firebase/firestore";
+import { db } from "@/app/lib/firebase";
+
+type Vote = {
+  name: string;
+  group: string;
+  answer: string;
+};
 
 export default function LotteryPage() {
-  const router = useRouter()
+  const router = useRouter();
 
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<null | {
-    groom: string
-    bride: string
-  }>(null)
+    groom: string;
+    bride: string;
+  }>(null);
 
-  const startLottery = () => {
-  setLoading(true)
+  const updatePhase = async (phase: string) => {
+    await updateDoc(doc(db, "quizzes", "test-quiz", "state", "current"), {
+      phase: phase,
+    });
+  };
 
-  setTimeout(async () => {
-    const groomList = ["山田太郎", "佐藤次郎", "鈴木一郎"]
-    const brideList = ["田中花子", "佐藤花子", "高橋美咲"]
+  const startLottery = async () => {
+    setLoading(true);
 
-    const randomGroom =
-      groomList[Math.floor(Math.random() * groomList.length)]
-    const randomBride =
-      brideList[Math.floor(Math.random() * brideList.length)]
+    // ① 正解取得
+    const ref = doc(db, "quizzes", "test-quiz", "state", "current");
+    const snap = await getDoc(ref);
 
-    setResult({
-      groom: randomGroom,
-      bride: randomBride,
-    })
+    if (!snap.exists()) return;
 
-    setLoading(false)
+    const correctAnswer = snap.data().correctAnswer;
 
-    // 🔥 ここ追加（winnerに切り替え）
-    await updatePhase("winner")
-    }, 2000)
-  }
+    // ② 投票データ取得
+    const snapshot = await getDocs(collection(db, "votes"));
 
-    const updatePhase = async (phase: string) => {
-      await updateDoc(
-        doc(db, "quizzes", "test-quiz", "state", "current"),
-        {
-          phase: phase
-        }
-      )
-    }
+    const votes: Vote[] = [];
+    snapshot.forEach((doc) => {
+      votes.push(doc.data() as Vote);
+    });
+
+    // ③ 正解者抽出
+    const correctUsers = votes.filter((u) => u.answer === correctAnswer);
+
+    const groomUsers = correctUsers.filter((u) => u.group === "groom");
+
+    const brideUsers = correctUsers.filter((u) => u.group === "bride");
+
+    // ④ 抽選
+    const pickWinner = (users: Vote[]) => {
+      if (users.length === 0) return null;
+      const index = Math.floor(Math.random() * users.length);
+      return users[index];
+    };
+
+    const groomWinner = pickWinner(groomUsers);
+    const brideWinner = pickWinner(brideUsers);
+
+    const resultData = {
+      groom: groomWinner?.name || "なし",
+      bride: brideWinner?.name || "なし",
+    };
+
+    // ① 先にFirestore保存
+    await updateDoc(ref, {
+      winners: resultData,
+    });
+
+    // ② 結果セット
+    setResult(resultData);
+
+    // ③ 最後にローディング解除
+    setLoading(false);
+    // ⑥ 画面切り替え
+    await updatePhase("winner");
+  };
 
   return (
     <div style={styles.container}>
       <h1 style={styles.title}>抽選</h1>
 
-      {!result && (
+      {/* 初期状態 */}
+      {!loading && !result && (
         <button style={styles.button} onClick={startLottery}>
           抽選スタート
         </button>
       )}
 
+      {/* 抽選中 */}
       {loading && <p>🎲 抽選中…</p>}
 
-      {result && (
-        <div style={styles.result}>
-          <h2>🎉 当選者</h2>
-          <p>新郎側：{result.groom}</p>
-          <p>新婦側：{result.bride}</p>
-        </div>
-      )}
+      {/* 結果表示 */}
+      {!loading && result && (
+        <>
+          <div style={styles.result}>
+            <h2>🎉 当選者</h2>
+            <p>新郎側：{result.groom}</p>
+            <p>新婦側：{result.bride}</p>
+          </div>
 
-      <button
-        style={styles.button}
-        onClick={async () => {
-          await updatePhase("closed")
-          router.push("/admin")
-        }}
-      >
-        管理画面へ戻る
-      </button>
+          <button
+            style={styles.button}
+            onClick={async () => {
+              await updatePhase("closed");
+              router.push("/admin");
+            }}
+          >
+            管理画面へ戻る
+          </button>
+        </>
+      )}
     </div>
-  )
+  );
 }
 
 const styles = {
@@ -104,4 +149,4 @@ const styles = {
     background: "#fff5f7",
     borderRadius: "12px",
   },
-}
+};
