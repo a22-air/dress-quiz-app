@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import { doc, updateDoc, collection, getDocs } from "firebase/firestore"
 import { db } from "@/app/lib/firebase"
+import { getDoc } from "firebase/firestore"
 
 type Vote = {
   name: string
@@ -16,6 +17,7 @@ export default function ResultPage() {
 
   const [correctUsers, setCorrectUsers] = useState<Vote[]>([])
   const [wrongUsers, setWrongUsers] = useState<Vote[]>([])
+  const [correctAnswer, setCorrectAnswer] = useState("")
 
   const updatePhase = async (phase: string) => {
     await updateDoc(
@@ -27,7 +29,14 @@ export default function ResultPage() {
   }
 
   useEffect(() => {
-    const fetchVotes = async () => {
+    const fetchData = async () => {
+      const ref = doc(db, "quizzes", "test-quiz", "state", "current")
+      const snap = await getDoc(ref)
+
+      if (!snap.exists()) return
+
+      const correctAnswer = snap.data().correctAnswer
+
       const snapshot = await getDocs(collection(db, "votes"))
 
       const correct: Vote[] = []
@@ -36,18 +45,19 @@ export default function ResultPage() {
       snapshot.forEach((doc) => {
         const data = doc.data() as Vote
 
-        if (data.answer === "pink") {
+        if (data.answer === correctAnswer) {
           correct.push(data)
         } else {
           wrong.push(data)
         }
       })
 
+      setCorrectAnswer(correctAnswer)
       setCorrectUsers(correct)
       setWrongUsers(wrong)
     }
 
-    fetchVotes()
+    fetchData()
   }, [])
 
   // グループ分け
@@ -74,7 +84,7 @@ export default function ResultPage() {
 
       {/* 正解 */}
       <div style={styles.card}>
-        <h2>正解は 💖 ピンク</h2>
+        <h2>正解は 💖 {correctAnswer}</h2>
         <p>正解者は {correctUsers.length} 名です！</p>
       </div>
 
@@ -111,7 +121,7 @@ export default function ResultPage() {
       {/* 不正解者 */}
       <div style={styles.card}>
         <h3>残念…不正解</h3>
-        
+
         {Object.entries(countByAnswer).map(([answer, count]) => (
           <div key={answer} style={{ marginBottom: "10px" }}>
             <p>
