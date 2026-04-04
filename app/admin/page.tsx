@@ -21,61 +21,203 @@ export default function AdminPage() {
     }
 
   return (
-    <div style={styles.container}>
-      <h1 style={styles.title}>管理画面</h1>
+<>
+      <div style={styles.container}>
+        <div style={styles.ornament}>
+          <div style={styles.ornamentLine} />
+          <div style={styles.ornamentDiamond} />
+          <div style={{ ...styles.ornamentLine, ...styles.ornamentLineRight }} />
+        </div>
 
-      <div style={styles.card}>
-        <h2>ドレス色あてクイズ</h2>
-        <button
-          style={styles.button}
-          onClick={async () => {
+        <h1 style={styles.mainTitle}>ドレス色あてクイズ</h1>
+        <p style={styles.subtitle}>新郎新婦専用ページ</p>
+
+        <div style={styles.card}>
+          <div style={styles.cardInner}>
+            <p style={styles.cardTitle}>Menu</p>
+
+            <button
+              style={styles.navButton}
+              onClick={async () => {
             await updatePhase("result")
             router.push("admin/result")
           }}
-        >
-          結果画面へ
-        </button>
+              onMouseEnter={e => Object.assign((e.target as HTMLElement).style, styles.navButtonHover)}
+              onMouseLeave={e => Object.assign((e.target as HTMLElement).style, { borderColor: "rgba(201,168,76,0.25)", transform: "none", boxShadow: "none" })}
+            >
+              <div style={styles.navButtonContent}>
+                <span style={styles.navButtonLabel}>Result</span>
+                <span style={styles.navButtonTitle}>結果発表</span>
+              </div>
+              <span style={styles.navButtonArrow}>→</span>
+            </button>
 
-        <button
-          style={styles.button}
-          onClick={async () => {
+            <button
+              style={{ ...styles.navButton, marginBottom: 0 }}
+               onClick={async () => {
             await updatePhase("lottery")
             router.push("admin/lottery")
           }}
-        >
-          抽選画面へ
-        </button>
+              onMouseEnter={e => Object.assign((e.target as HTMLElement).style, styles.navButtonHover)}
+              onMouseLeave={e => Object.assign((e.target as HTMLElement).style, { borderColor: "rgba(201,168,76,0.25)", transform: "none", boxShadow: "none" })}
+            >
+              <div style={styles.navButtonContent}>
+                <span style={styles.navButtonLabel}>Lottery</span>
+                <span style={styles.navButtonTitle}>抽選</span>
+              </div>
+              <span style={styles.navButtonArrow}>→</span>
+            </button>
+          </div>
+        </div>
+
+        <div style={styles.footerOrnament}>
+          <div style={styles.footerLine} />
+          <span style={styles.footerText}>✦</span>
+          <div style={{ ...styles.footerLine, ...styles.footerLineRight }} />
+        </div>
       </div>
-    </div>
+    </>
+
+    
   )
+
 }
 
-const styles = {
+const styles: { [key: string]: React.CSSProperties } = {
   container: {
-    padding: "40px",
-    background: "#fff5f7",
     minHeight: "100vh",
-    textAlign: "center" as const,
+    background: "linear-gradient(160deg, #fdfcfa 0%, #f5f0e8 50%, #fdfcfa 100%)",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: "60px 24px",
+    position: "relative",
+    overflow: "hidden",
+    fontFamily: "'Cormorant Garamond', serif",
   },
-  title: {
-    fontSize: "28px",
+  ornament: {
+    display: "flex",
+    alignItems: "center",
+    gap: "16px",
     marginBottom: "20px",
   },
-  card: {
-    background: "#fff",
-    padding: "20px",
-    borderRadius: "12px",
-    boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-    display: "inline-block",
+  ornamentLine: {
+    width: "60px",
+    height: "1px",
+    background: "linear-gradient(90deg, transparent, #c9a84c)",
   },
-  button: {
-    display: "block",
-    margin: "10px auto",
-    padding: "10px 20px",
-    borderRadius: "8px",
-    border: "none",
+  ornamentLineRight: {
+    background: "linear-gradient(90deg, #c9a84c, transparent)",
+  },
+  ornamentDiamond: {
+    width: "6px",
+    height: "6px",
+    background: "#c9a84c",
+    transform: "rotate(45deg)",
+  },
+  mainTitle: {
+    fontFamily: "'Cormorant Garamond', serif",
+    fontSize: "clamp(28px, 5vw, 42px)" as unknown as string,
+    fontWeight: 300,
+    color: "#1a1612",
+    letterSpacing: "0.12em",
+    textAlign: "center",
+    marginBottom: "8px",
+  },
+  subtitle: {
+    fontFamily: "'Zen Kaku Gothic New', sans-serif",
+    fontSize: "12px",
+    fontWeight: 300,
+    color: "#c9a84c",
+    letterSpacing: "0.3em",
+    textAlign: "center",
+    marginBottom: "56px",
+  },
+  card: {
+    background: "rgba(255,255,255,0.85)",
+    backdropFilter: "blur(20px)",
+    border: "1px solid rgba(201,168,76,0.2)",
+    borderRadius: "2px",
+    padding: "48px 56px",
+    width: "100%",
+    maxWidth: "440px",
+    position: "relative",
+    boxShadow: "0 4px 24px rgba(139,105,20,0.06), 0 1px 4px rgba(139,105,20,0.04)",
+  },
+  cardInner: {
+    position: "relative",
+  },
+  cardTitle: {
+    fontFamily: "'Cormorant Garamond', serif",
+    fontSize: "11px",
+    fontWeight: 400,
+    color: "#c9a84c",
+    letterSpacing: "0.35em",
+    textTransform: "uppercase",
+    textAlign: "center",
+    marginBottom: "32px",
+  },
+  navButton: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    width: "100%",
+    padding: "18px 24px",
+    background: "transparent",
+    border: "1px solid rgba(201,168,76,0.25)",
     cursor: "pointer",
-    background: "#ff7aa2",
-    color: "#fff",
+    transition: "all 0.3s ease",
+    marginBottom: "14px",
+    position: "relative",
+  },
+  navButtonHover: {
+    borderColor: "rgba(201,168,76,0.6)",
+    transform: "translateY(-1px)",
+    boxShadow: "0 8px 24px rgba(139,105,20,0.1)",
+  },
+  navButtonContent: {
+    textAlign: "left",
+  },
+  navButtonLabel: {
+    fontFamily: "'Zen Kaku Gothic New', sans-serif",
+    fontSize: "10px",
+    fontWeight: 300,
+    color: "#c9a84c",
+    letterSpacing: "0.25em",
+    textTransform: "uppercase",
+    display: "block",
+    marginBottom: "4px",
+  },
+  navButtonTitle: {
+    fontFamily: "'Cormorant Garamond', serif",
+    fontSize: "22px",
+    fontWeight: 400,
+    color: "#1a1612",
+    letterSpacing: "0.05em",
+  },
+  navButtonArrow: {
+    fontSize: "18px",
+    color: "#c9a84c",
+  },
+  footerOrnament: {
+    marginTop: "48px",
+    display: "flex",
+    alignItems: "center",
+    gap: "20px",
+  },
+  footerLine: {
+    width: "40px",
+    height: "1px",
+    background: "linear-gradient(90deg, transparent, rgba(201,168,76,0.4))",
+  },
+  footerLineRight: {
+    background: "linear-gradient(90deg, rgba(201,168,76,0.4), transparent)",
+  },
+  footerText: {
+    fontFamily: "'Cormorant Garamond', serif",
+    fontSize: "11px",
+    color: "rgba(201,168,76,0.5)",
+    letterSpacing: "0.2em",
   },
 }
