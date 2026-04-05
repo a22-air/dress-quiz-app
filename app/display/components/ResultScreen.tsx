@@ -172,7 +172,7 @@ export default function ResultScreen() {
             <div style={styles.columnHeader}>
               <div style={styles.columnHeaderLine} />
               <p style={styles.columnTitle}>新郎側</p>
-              <p style={styles.columnTitleEn}>Groom's Guests</p>
+              <p style={styles.columnTitleEn}>Groom&apos; Guests</p>
               <div style={styles.columnHeaderLine} />
             </div>
             <div ref={groomRef} style={styles.scrollBox}>
@@ -193,7 +193,7 @@ export default function ResultScreen() {
             <div style={styles.columnHeader}>
               <div style={styles.columnHeaderLine} />
               <p style={styles.columnTitle}>新婦側</p>
-              <p style={styles.columnTitleEn}>Bride's Guests</p>
+              <p style={styles.columnTitleEn}>Bride&apos; Guests</p>
               <div style={styles.columnHeaderLine} />
             </div>
             <div ref={brideRef} style={styles.scrollBox}>

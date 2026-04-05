@@ -11,18 +11,6 @@ export default function WinnerScreen() {
   const [show, setShow] = useState(false);
   const [flash, setFlash] = useState(false);
   const [dark, setDark] = useState(true);
-  // const [sparkles, setSparkles] = useState<{ id: number; x: number; y: number; delay: number; size: number }[]>([])
-
-  // useEffect(() => {
-  //   const items = Array.from({ length: 24 }, (_, i) => ({
-  //     id: i,
-  //     x: Math.random() * 100,
-  //     y: Math.random() * 100,
-  //     delay: Math.random() * 4,
-  //     size: Math.random() * 10 + 6,
-  //   }))
-  //   setSparkles(items)
-  // }, [])
 
   const [sparkles] = useState<
     {

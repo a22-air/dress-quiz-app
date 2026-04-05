@@ -4,7 +4,6 @@ import { useEffect, useState } from "react"
 
 export default function LotteryScreen() {
   const [visible, setVisible] = useState(true)
-  const [sparkles, setSparkles] = useState<{ id: number; x: number; y: number; delay: number; size: number }[]>([])
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -13,16 +12,23 @@ export default function LotteryScreen() {
     return () => clearInterval(interval)
   }, [])
 
-  useEffect(() => {
-    const items = Array.from({ length: 24 }, (_, i) => ({
+  const [sparkles] = useState<
+    {
+      id: number;
+      x: number;
+      y: number;
+      delay: number;
+      size: number;
+    }[]
+  >(() =>
+    Array.from({ length: 24 }, (_, i) => ({
       id: i,
       x: Math.random() * 100,
       y: Math.random() * 100,
       delay: Math.random() * 4,
       size: Math.random() * 10 + 6,
     }))
-    setSparkles(items)
-  }, [])
+  );
 
   return (
     <div style={styles.page}>
