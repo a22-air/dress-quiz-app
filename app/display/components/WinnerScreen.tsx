@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { doc, onSnapshot } from "firebase/firestore";
 import { db } from "@/app/lib/firebase";
-// @ts-ignore
 import confetti from "canvas-confetti";
 
 export default function WinnerScreen() {
@@ -12,18 +11,36 @@ export default function WinnerScreen() {
   const [show, setShow] = useState(false);
   const [flash, setFlash] = useState(false);
   const [dark, setDark] = useState(true);
-  const [sparkles, setSparkles] = useState<{ id: number; x: number; y: number; delay: number; size: number }[]>([])
+  // const [sparkles, setSparkles] = useState<{ id: number; x: number; y: number; delay: number; size: number }[]>([])
 
-  useEffect(() => {
-    const items = Array.from({ length: 24 }, (_, i) => ({
+  // useEffect(() => {
+  //   const items = Array.from({ length: 24 }, (_, i) => ({
+  //     id: i,
+  //     x: Math.random() * 100,
+  //     y: Math.random() * 100,
+  //     delay: Math.random() * 4,
+  //     size: Math.random() * 10 + 6,
+  //   }))
+  //   setSparkles(items)
+  // }, [])
+
+  const [sparkles] = useState<
+    {
+      id: number;
+      x: number;
+      y: number;
+      delay: number;
+      size: number;
+    }[]
+  >(() =>
+    Array.from({ length: 24 }, (_, i) => ({
       id: i,
       x: Math.random() * 100,
       y: Math.random() * 100,
       delay: Math.random() * 4,
       size: Math.random() * 10 + 6,
     }))
-    setSparkles(items)
-  }, [])
+  );
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -34,19 +51,42 @@ export default function WinnerScreen() {
   }, []);
 
   useEffect(() => {
-    if (show) {
-      setFlash(true);
-      setTimeout(() => setFlash(false), 300);
+  if (!show) return;
 
-      const duration = 3000;
-      const end = Date.now() + duration;
-      const interval = setInterval(() => {
-        if (Date.now() > end) return clearInterval(interval);
-        confetti({ particleCount: 6, angle: 60, spread: 55, origin: { x: 0 }, colors: ["#c9a84c", "#f0d98a", "#fff"] });
-        confetti({ particleCount: 6, angle: 120, spread: 55, origin: { x: 1 }, colors: ["#c9a84c", "#f0d98a", "#fff"] });
-      }, 100);
+  setTimeout(() => setFlash(true), 0);
+  const flashTimeout = setTimeout(() => setFlash(false), 300);
+
+  const duration = 3000;
+  const end = Date.now() + duration;
+
+  const interval = setInterval(() => {
+    if (Date.now() > end) {
+      clearInterval(interval);
+      return;
     }
-  }, [show]);
+
+    confetti({
+      particleCount: 6,
+      angle: 60,
+      spread: 55,
+      origin: { x: 0 },
+      colors: ["#c9a84c", "#f0d98a", "#fff"],
+    });
+
+    confetti({
+      particleCount: 6,
+      angle: 120,
+      spread: 55,
+      origin: { x: 1 },
+      colors: ["#c9a84c", "#f0d98a", "#fff"],
+    });
+  }, 100);
+
+  return () => {
+    clearTimeout(flashTimeout);
+    clearInterval(interval);
+  };
+}, [show]);
 
   useEffect(() => {
     const ref = doc(db, "quizzes", "test-quiz", "state", "current");
@@ -62,11 +102,17 @@ export default function WinnerScreen() {
   }, []);
 
   return (
-    <div style={{
-      ...styles.page,
-      background: dark ? "#000000" : flash ? "#fffbe6" : "linear-gradient(160deg, #0e0c09 0%, #1c1710 40%, #0e0c09 100%)",
-      transition: "background 0.4s ease",
-    }}>
+    <div
+      style={{
+        ...styles.page,
+        background: dark
+          ? "#000000"
+          : flash
+            ? "#fffbe6"
+            : "linear-gradient(160deg, #0e0c09 0%, #1c1710 40%, #0e0c09 100%)",
+        transition: "background 0.4s ease",
+      }}
+    >
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Zen+Kaku+Gothic+New:wght@300;400&display=swap');
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -120,29 +166,62 @@ export default function WinnerScreen() {
       ))}
 
       {/* 四隅装飾 */}
-      <div style={{ ...styles.corner, top: 32, left: 32, borderWidth: "2px 0 0 2px" }} />
-      <div style={{ ...styles.corner, top: 32, right: 32, borderWidth: "2px 2px 0 0" }} />
-      <div style={{ ...styles.corner, bottom: 32, left: 32, borderWidth: "0 0 2px 2px" }} />
-      <div style={{ ...styles.corner, bottom: 32, right: 32, borderWidth: "0 2px 2px 0" }} />
+      <div
+        style={{
+          ...styles.corner,
+          top: 32,
+          left: 32,
+          borderWidth: "2px 0 0 2px",
+        }}
+      />
+      <div
+        style={{
+          ...styles.corner,
+          top: 32,
+          right: 32,
+          borderWidth: "2px 2px 0 0",
+        }}
+      />
+      <div
+        style={{
+          ...styles.corner,
+          bottom: 32,
+          left: 32,
+          borderWidth: "0 0 2px 2px",
+        }}
+      />
+      <div
+        style={{
+          ...styles.corner,
+          bottom: 32,
+          right: 32,
+          borderWidth: "0 2px 2px 0",
+        }}
+      />
 
       {/* 左右縦ライン */}
       <div style={styles.sideLineLeft} />
       <div style={styles.sideLineRight} />
 
       <div className="main-card" style={styles.card}>
-
         {/* 上部オーナメント */}
         <div style={styles.topOrnament}>
           <div style={styles.ornamentLineLong} />
           <div style={styles.ornamentDiamond} />
           <span style={styles.ornamentText}>Wedding Dress Quiz</span>
           <div style={styles.ornamentDiamond} />
-          <div style={{ ...styles.ornamentLineLong, transform: "scaleX(-1)" }} />
+          <div
+            style={{ ...styles.ornamentLineLong, transform: "scaleX(-1)" }}
+          />
         </div>
 
         {/* タイトル */}
-        <h1 className="shimmer-title" style={styles.mainTitle}>当選者発表</h1>
-        <p style={styles.mainTitleEn}><em>Winner Announcement</em></p>
+        <h1 className="shimmer-title" style={styles.mainTitle}>
+          当選者発表
+        </h1>
+        <p style={styles.mainTitleEn}>
+          <em>Winner Announcement</em>
+        </p>
 
         <div style={styles.dividerRow}>
           <div style={styles.dividerLine} />
@@ -152,11 +231,10 @@ export default function WinnerScreen() {
 
         {/* 当選者カード */}
         <div style={styles.winnersWrapper}>
-
           {/* 新郎側 */}
           <div style={styles.winnerCard}>
             <p style={styles.winnerSideLabel}>新郎側</p>
-            <p style={styles.winnerSideLabelEn}>Groom's Guest</p>
+            <p style={styles.winnerSideLabelEn}>Groom&apos; Guest</p>
             <div style={styles.winnerCardDivider} />
             <p
               className={show ? "winner-name" : ""}
@@ -176,7 +254,7 @@ export default function WinnerScreen() {
           {/* 新婦側 */}
           <div style={styles.winnerCard}>
             <p style={styles.winnerSideLabel}>新婦側</p>
-            <p style={styles.winnerSideLabelEn}>Bride's Guest</p>
+            <p style={styles.winnerSideLabelEn}>Bride&apos;s Guest</p>
             <div style={styles.winnerCardDivider} />
             <p
               className={show ? "winner-name" : ""}
@@ -190,26 +268,30 @@ export default function WinnerScreen() {
               {bride}
             </p>
           </div>
-
         </div>
 
         {/* おめでとうメッセージ */}
-        <p style={{
-          ...styles.congratsText,
-          opacity: show ? 1 : 0,
-          transition: "opacity 1s ease 0.6s",
-        }}>
+        <p
+          style={{
+            ...styles.congratsText,
+            opacity: show ? 1 : 0,
+            transition: "opacity 1s ease 0.6s",
+          }}
+        >
           おめでとうございます — Congratulations
         </p>
 
         {/* 下部オーナメント */}
-        <div style={{ ...styles.topOrnament, marginTop: "48px", marginBottom: 0 }}>
+        <div
+          style={{ ...styles.topOrnament, marginTop: "48px", marginBottom: 0 }}
+        >
           <div style={styles.ornamentLineLong} />
           <div style={styles.ornamentDiamond} />
           <div style={styles.ornamentDiamond} />
-          <div style={{ ...styles.ornamentLineLong, transform: "scaleX(-1)" }} />
+          <div
+            style={{ ...styles.ornamentLineLong, transform: "scaleX(-1)" }}
+          />
         </div>
-
       </div>
     </div>
   );
@@ -239,7 +321,8 @@ const styles: { [key: string]: React.CSSProperties } = {
     top: "10%",
     bottom: "10%",
     width: "1px",
-    background: "linear-gradient(180deg, transparent, rgba(201,168,76,0.25), transparent)",
+    background:
+      "linear-gradient(180deg, transparent, rgba(201,168,76,0.25), transparent)",
   },
   sideLineRight: {
     position: "absolute",
@@ -247,7 +330,8 @@ const styles: { [key: string]: React.CSSProperties } = {
     top: "10%",
     bottom: "10%",
     width: "1px",
-    background: "linear-gradient(180deg, transparent, rgba(201,168,76,0.25), transparent)",
+    background:
+      "linear-gradient(180deg, transparent, rgba(201,168,76,0.25), transparent)",
   },
   card: {
     display: "flex",
@@ -324,7 +408,8 @@ const styles: { [key: string]: React.CSSProperties } = {
   dividerLine: {
     flex: 1,
     height: "1px",
-    background: "linear-gradient(90deg, transparent, rgba(201,168,76,0.4), transparent)",
+    background:
+      "linear-gradient(90deg, transparent, rgba(201,168,76,0.4), transparent)",
   },
   dividerIcon: {
     fontFamily: "'Cormorant Garamond', serif",
@@ -379,7 +464,8 @@ const styles: { [key: string]: React.CSSProperties } = {
   columnDivider: {
     width: "1px",
     height: "160px",
-    background: "linear-gradient(180deg, transparent, rgba(201,168,76,0.3), transparent)",
+    background:
+      "linear-gradient(180deg, transparent, rgba(201,168,76,0.3), transparent)",
     flexShrink: 0,
     margin: "0 32px",
   },
