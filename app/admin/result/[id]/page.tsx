@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { doc, updateDoc, collection, getDocs } from "firebase/firestore";
 import { db } from "@/app/lib/firebase";
 import { getDoc } from "firebase/firestore";
+import { useParams } from "next/navigation";
 
 type Vote = {
   name: string;
@@ -20,45 +21,54 @@ export default function ResultPage() {
   const [correctAnswer, setCorrectAnswer] = useState("");
   const [loading, setLoading] = useState(true);
 
+  const params = useParams();
+  const quizId = params.id as string;
+
   const updatePhase = async (phase: string) => {
-    await updateDoc(doc(db, "quizzes", "test-quiz", "state", "current"), {
+    if (!quizId) return;
+
+    await updateDoc(doc(db, "quizzes", quizId, "state", "current"), {
       phase: phase,
     });
   };
 
   useEffect(() => {
-    const fetchData = async () => {
-      const ref = doc(db, "quizzes", "test-quiz", "state", "current");
-      const snap = await getDoc(ref);
+  if (!quizId) return;
 
-      if (!snap.exists()) return;
+  const fetchData = async () => {
+    const ref = doc(db, "quizzes", quizId, "state", "current");
+    const snap = await getDoc(ref);
 
-      const correctAnswer = snap.data().correctAnswer;
+    if (!snap.exists()) return;
 
-      const snapshot = await getDocs(collection(db, "votes"));
+    const correctAnswer = snap.data().correctAnswer;
 
-      const correct: Vote[] = [];
-      const wrong: Vote[] = [];
+    // 👇 ここが超重要（修正ポイント）
+    const votesRef = collection(db, "quizzes", quizId, "votes");
+    const snapshot = await getDocs(votesRef);
 
-      snapshot.forEach((doc) => {
-        const data = doc.data() as Vote;
+    const correct: Vote[] = [];
+    const wrong: Vote[] = [];
 
-        if (data.answer === correctAnswer) {
-          correct.push(data);
-        } else {
-          wrong.push(data);
-        }
-      });
+    snapshot.forEach((doc) => {
+      const data = doc.data() as Vote;
 
-      setCorrectAnswer(correctAnswer);
-      setCorrectUsers(correct);
-      setWrongUsers(wrong);
+      if (data.answer === correctAnswer) {
+        correct.push(data);
+      } else {
+        wrong.push(data);
+      }
+    });
 
-      setLoading(false);
-    };
+    setCorrectAnswer(correctAnswer);
+    setCorrectUsers(correct);
+    setWrongUsers(wrong);
 
-    fetchData();
-  }, []);
+    setLoading(false);
+  };
+
+  fetchData();
+}, [quizId]);
 
   // グループ分け
   const groomCorrect = correctUsers.filter((u) => u.group === "groom");
