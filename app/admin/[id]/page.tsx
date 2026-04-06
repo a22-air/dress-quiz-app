@@ -3,6 +3,7 @@
 import { useRouter, useParams } from "next/navigation";
 import { doc, updateDoc } from "firebase/firestore";
 import { db } from "@/app/lib/firebase";
+import { useEffect } from "react";
 
 export default function AdminPage() {
   const router = useRouter();
@@ -21,6 +22,21 @@ export default function AdminPage() {
       console.error("更新エラー:", error);
     }
   };
+
+  useEffect(() => {
+    const isAuthed = sessionStorage.getItem("admin-auth");
+
+    if (isAuthed === "true") return;
+
+    const password = prompt("パスワードを入力してください");
+
+    if (password === process.env.NEXT_PUBLIC_ADMIN_PASSWORD) {
+      sessionStorage.setItem("admin-auth", "true");
+    } else {
+      alert("パスワードが違います");
+      router.push("/");
+    }
+  }, [router]);
 
   if (!quizId) {
     return <div>読み込み中...</div>;
