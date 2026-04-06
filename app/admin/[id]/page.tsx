@@ -1,14 +1,19 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { doc, updateDoc } from "firebase/firestore";
 import { db } from "@/app/lib/firebase";
 
 export default function AdminPage() {
   const router = useRouter();
+  const params = useParams();
+  const quizId = params.id as string;
+
   const updatePhase = async (phase: string) => {
+    if (!quizId) return;
+
     try {
-      await updateDoc(doc(db, "quizzes", "test-quiz", "state", "current"), {
+      await updateDoc(doc(db, "quizzes", quizId, "state", "current"), {
         phase: phase,
       });
       console.log("更新成功:", phase);
@@ -16,6 +21,10 @@ export default function AdminPage() {
       console.error("更新エラー:", error);
     }
   };
+
+  if (!quizId) {
+    return <div>読み込み中...</div>;
+  }
 
   return (
     <>
@@ -38,8 +47,10 @@ export default function AdminPage() {
             <button
               style={styles.navButton}
               onClick={async () => {
+                if (!quizId) return;
+
                 await updatePhase("result");
-                router.push("admin/result");
+                router.push(`/admin/result/${quizId}`);
               }}
               onMouseEnter={(e) =>
                 Object.assign(
@@ -65,8 +76,10 @@ export default function AdminPage() {
             <button
               style={{ ...styles.navButton, marginBottom: 0 }}
               onClick={async () => {
+                if (!quizId) return;
+
                 await updatePhase("lottery");
-                router.push("admin/lottery");
+                router.push(`/admin/lottery/${quizId}`);
               }}
               onMouseEnter={(e) =>
                 Object.assign(

@@ -33,42 +33,42 @@ export default function ResultPage() {
   };
 
   useEffect(() => {
-  if (!quizId) return;
+    if (!quizId) return;
 
-  const fetchData = async () => {
-    const ref = doc(db, "quizzes", quizId, "state", "current");
-    const snap = await getDoc(ref);
+    const fetchData = async () => {
+      const ref = doc(db, "quizzes", quizId, "state", "current");
+      const snap = await getDoc(ref);
 
-    if (!snap.exists()) return;
+      if (!snap.exists()) return;
 
-    const correctAnswer = snap.data().correctAnswer;
+      const correctAnswer = snap.data().correctAnswer;
 
-    // 👇 ここが超重要（修正ポイント）
-    const votesRef = collection(db, "quizzes", quizId, "votes");
-    const snapshot = await getDocs(votesRef);
+      // 👇 ここが超重要（修正ポイント）
+      const votesRef = collection(db, "quizzes", quizId, "votes");
+      const snapshot = await getDocs(votesRef);
 
-    const correct: Vote[] = [];
-    const wrong: Vote[] = [];
+      const correct: Vote[] = [];
+      const wrong: Vote[] = [];
 
-    snapshot.forEach((doc) => {
-      const data = doc.data() as Vote;
+      snapshot.forEach((doc) => {
+        const data = doc.data() as Vote;
 
-      if (data.answer === correctAnswer) {
-        correct.push(data);
-      } else {
-        wrong.push(data);
-      }
-    });
+        if (data.answer === correctAnswer) {
+          correct.push(data);
+        } else {
+          wrong.push(data);
+        }
+      });
 
-    setCorrectAnswer(correctAnswer);
-    setCorrectUsers(correct);
-    setWrongUsers(wrong);
+      setCorrectAnswer(correctAnswer);
+      setCorrectUsers(correct);
+      setWrongUsers(wrong);
 
-    setLoading(false);
-  };
+      setLoading(false);
+    };
 
-  fetchData();
-}, [quizId]);
+    fetchData();
+  }, [quizId]);
 
   // グループ分け
   const groomCorrect = correctUsers.filter((u) => u.group === "groom");
@@ -127,9 +127,11 @@ export default function ResultPage() {
       <button
         style={styles.lotteryButton}
         onClick={async () => {
-          await updatePhase("lottery");
-          router.push("/admin/lottery");
-        }}
+              if (!quizId) return;
+
+              await updatePhase("lottery");
+              router.push(`/admin/lottery/${quizId}`);
+            }}
       >
         ✦ 抽選スタート ✦
       </button>
@@ -210,8 +212,10 @@ export default function ResultPage() {
           boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
         }}
         onClick={async () => {
+          if (!quizId) return;
+
           await updatePhase("closed");
-          router.push("/admin");
+          router.push(`/admin/${quizId}`);
         }}
       >
         ← トップ画面へ戻る

@@ -10,7 +10,11 @@ type Vote = {
   answer: string;
 };
 
-export default function ResultScreen() {
+type Props = {
+  quizId: string;
+};
+
+export default function ResultScreen({ quizId }: Props) {
   const groomRef = useRef<HTMLDivElement | null>(null);
   const brideRef = useRef<HTMLDivElement | null>(null);
 
@@ -22,46 +26,67 @@ export default function ResultScreen() {
   const [showList, setShowList] = useState(false);
 
   useEffect(() => {
+    if (!quizId) return;
+
     const fetchData = async () => {
-      const ref = doc(db, "quizzes", "test-quiz", "state", "current");
+      const ref = doc(db, "quizzes", quizId, "state", "current");
       const snap = await getDoc(ref);
-      if (!snap.exists()) return;
+
+      if (!snap.exists()) {
+        setLoading(false);
+        return;
+      }
+
       const correct = snap.data().correctAnswer;
       setCorrectAnswer(correct);
-      const snapshot = await getDocs(collection(db, "votes"));
+
+      const snapshot = await getDocs(
+        collection(db, "quizzes", quizId, "votes")
+      );
+
       const groom: string[] = [];
       const bride: string[] = [];
+
       snapshot.forEach((doc) => {
         const data = doc.data() as Vote;
         if (data.answer === correct) {
           if (data.group === "groom") groom.push(data.name);
-          else bride.push(data.name);
+          else if (data.group === "bride") bride.push(data.name);
         }
       });
+
       setGroomWinners(groom);
       setBrideWinners(bride);
       setTotal(groom.length + bride.length);
       setLoading(false);
     };
+
     fetchData();
-  }, []);
+  }, [quizId]);
 
   useEffect(() => {
     if (!showList) return;
+
     const interval = setInterval(() => {
       [groomRef, brideRef].forEach((ref) => {
         if (ref.current) {
           const el = ref.current;
-          if (el.scrollTop + el.clientHeight >= el.scrollHeight) el.scrollTop = 0;
-          else el.scrollTop += 1;
+
+          if (el.scrollTop + el.clientHeight >= el.scrollHeight) {
+            el.scrollTop = 0;
+          } else {
+            el.scrollTop += 1;
+          }
         }
       });
     }, 30);
+
     return () => clearInterval(interval);
   }, [showList]);
 
   useEffect(() => {
     if (loading) return;
+
     const timer = setTimeout(() => setShowList(true), 1000);
     return () => clearTimeout(timer);
   }, [loading]);
@@ -84,7 +109,9 @@ export default function ResultScreen() {
           <div style={styles.ornamentDiamond} />
           <div style={{ ...styles.ornamentLine, transform: "scaleX(-1)" }} />
         </div>
-        <p className="loading-text" style={styles.loadingText}>集計中</p>
+        <p className="loading-text" style={styles.loadingText}>
+          集計中
+        </p>
         <p style={styles.loadingSubText}>Calculating...</p>
       </div>
     );
@@ -125,36 +152,69 @@ export default function ResultScreen() {
       `}</style>
 
       {/* 四隅装飾 */}
-      <div style={{ ...styles.corner, top: 32, left: 32, borderWidth: "2px 0 0 2px" }} />
-      <div style={{ ...styles.corner, top: 32, right: 32, borderWidth: "2px 2px 0 0" }} />
-      <div style={{ ...styles.corner, bottom: 32, left: 32, borderWidth: "0 0 2px 2px" }} />
-      <div style={{ ...styles.corner, bottom: 32, right: 32, borderWidth: "0 2px 2px 0" }} />
+      <div
+        style={{
+          ...styles.corner,
+          top: 32,
+          left: 32,
+          borderWidth: "2px 0 0 2px",
+        }}
+      />
+      <div
+        style={{
+          ...styles.corner,
+          top: 32,
+          right: 32,
+          borderWidth: "2px 2px 0 0",
+        }}
+      />
+      <div
+        style={{
+          ...styles.corner,
+          bottom: 32,
+          left: 32,
+          borderWidth: "0 0 2px 2px",
+        }}
+      />
+      <div
+        style={{
+          ...styles.corner,
+          bottom: 32,
+          right: 32,
+          borderWidth: "0 2px 2px 0",
+        }}
+      />
 
       {/* 左右縦ライン */}
       <div style={styles.sideLineLeft} />
       <div style={styles.sideLineRight} />
 
       <div className="main-card" style={styles.card}>
-
         {/* 上部オーナメント */}
         <div style={styles.topOrnament}>
           <div style={styles.ornamentLineLong} />
           <div style={styles.ornamentDiamond} />
           <span style={styles.ornamentText}>Result Announcement</span>
           <div style={styles.ornamentDiamond} />
-          <div style={{ ...styles.ornamentLineLong, transform: "scaleX(-1)" }} />
+          <div
+            style={{ ...styles.ornamentLineLong, transform: "scaleX(-1)" }}
+          />
         </div>
 
         {/* 正解発表 */}
         <div className="answer-block" style={styles.answerBlock}>
           <p style={styles.answerEyebrow}>正解のドレス</p>
-          <p className="correct-color" style={styles.correctColor}>{correctAnswer}</p>
+          <p className="correct-color" style={styles.correctColor}>
+            {correctAnswer}
+          </p>
           <div style={styles.dividerRow}>
             <div style={styles.dividerLine} />
             <span style={styles.dividerIcon}>✦</span>
             <div style={styles.dividerLine} />
           </div>
-          <p style={styles.totalText}>正解者 <span style={styles.totalNumber}>{total}</span> 名</p>
+          <p style={styles.totalText}>
+            正解者 <span style={styles.totalNumber}>{total}</span> 名
+          </p>
         </div>
 
         {/* 正解者リスト */}
@@ -208,13 +268,16 @@ export default function ResultScreen() {
         </div>
 
         {/* 下部オーナメント */}
-        <div style={{ ...styles.topOrnament, marginTop: "48px", marginBottom: 0 }}>
+        <div
+          style={{ ...styles.topOrnament, marginTop: "48px", marginBottom: 0 }}
+        >
           <div style={styles.ornamentLineLong} />
           <div style={styles.ornamentDiamond} />
           <div style={styles.ornamentDiamond} />
-          <div style={{ ...styles.ornamentLineLong, transform: "scaleX(-1)" }} />
+          <div
+            style={{ ...styles.ornamentLineLong, transform: "scaleX(-1)" }}
+          />
         </div>
-
       </div>
     </div>
   );
@@ -224,7 +287,8 @@ const styles: { [key: string]: React.CSSProperties } = {
   page: {
     width: "100vw",
     height: "100vh",
-    background: "linear-gradient(160deg, #0e0c09 0%, #1c1710 40%, #0e0c09 100%)",
+    background:
+      "linear-gradient(160deg, #0e0c09 0%, #1c1710 40%, #0e0c09 100%)",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
@@ -245,7 +309,8 @@ const styles: { [key: string]: React.CSSProperties } = {
     top: "10%",
     bottom: "10%",
     width: "1px",
-    background: "linear-gradient(180deg, transparent, rgba(201,168,76,0.25), transparent)",
+    background:
+      "linear-gradient(180deg, transparent, rgba(201,168,76,0.25), transparent)",
   },
   sideLineRight: {
     position: "absolute",
@@ -253,7 +318,8 @@ const styles: { [key: string]: React.CSSProperties } = {
     top: "10%",
     bottom: "10%",
     width: "1px",
-    background: "linear-gradient(180deg, transparent, rgba(201,168,76,0.25), transparent)",
+    background:
+      "linear-gradient(180deg, transparent, rgba(201,168,76,0.25), transparent)",
   },
   card: {
     display: "flex",
@@ -335,7 +401,8 @@ const styles: { [key: string]: React.CSSProperties } = {
   dividerLine: {
     flex: 1,
     height: "1px",
-    background: "linear-gradient(90deg, transparent, rgba(201,168,76,0.4), transparent)",
+    background:
+      "linear-gradient(90deg, transparent, rgba(201,168,76,0.4), transparent)",
   },
   dividerIcon: {
     fontFamily: "'Cormorant Garamond', serif",
@@ -381,7 +448,8 @@ const styles: { [key: string]: React.CSSProperties } = {
   columnHeaderLine: {
     width: "60px",
     height: "1px",
-    background: "linear-gradient(90deg, transparent, rgba(201,168,76,0.4), transparent)",
+    background:
+      "linear-gradient(90deg, transparent, rgba(201,168,76,0.4), transparent)",
   },
   columnTitle: {
     fontFamily: "'Cormorant Garamond', serif",
@@ -400,7 +468,8 @@ const styles: { [key: string]: React.CSSProperties } = {
   columnDivider: {
     width: "1px",
     alignSelf: "stretch",
-    background: "linear-gradient(180deg, transparent, rgba(201,168,76,0.3), transparent)",
+    background:
+      "linear-gradient(180deg, transparent, rgba(201,168,76,0.3), transparent)",
     margin: "0 48px",
     flexShrink: 0,
   },

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import {
   doc,
   updateDoc,
@@ -19,6 +19,8 @@ type Vote = {
 
 export default function LotteryPage() {
   const router = useRouter();
+  const params = useParams();
+  const quizId = params.id as string;
 
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<null | {
@@ -27,24 +29,32 @@ export default function LotteryPage() {
   }>(null);
 
   const updatePhase = async (phase: string) => {
-    await updateDoc(doc(db, "quizzes", "test-quiz", "state", "current"), {
+    if (!quizId) return;
+
+    await updateDoc(doc(db, "quizzes", quizId, "state", "current"), {
       phase: phase,
     });
   };
 
   const startLottery = async () => {
+    if (!quizId) return;
+
     setLoading(true);
 
     // ① 正解取得
-    const ref = doc(db, "quizzes", "test-quiz", "state", "current");
+    const ref = doc(db, "quizzes", quizId, "state", "current");
     const snap = await getDoc(ref);
 
-    if (!snap.exists()) return;
+    if (!snap.exists()) {
+      setLoading(false);
+      return;
+    }
 
     const correctAnswer = snap.data().correctAnswer;
 
-    // ② 投票データ取得
-    const snapshot = await getDocs(collection(db, "votes"));
+    // ② 投票データ取得（ここ重要🔥）
+    const votesRef = collection(db, "quizzes", quizId, "votes");
+    const snapshot = await getDocs(votesRef);
 
     const votes: Vote[] = [];
     snapshot.forEach((doc) => {
@@ -55,7 +65,6 @@ export default function LotteryPage() {
     const correctUsers = votes.filter((u) => u.answer === correctAnswer);
 
     const groomUsers = correctUsers.filter((u) => u.group === "groom");
-
     const brideUsers = correctUsers.filter((u) => u.group === "bride");
 
     // ④ 抽選
@@ -69,21 +78,27 @@ export default function LotteryPage() {
     const brideWinner = pickWinner(brideUsers);
 
     const resultData = {
-      groom: groomWinner?.name || "なし",
-      bride: brideWinner?.name || "なし",
+      groom: groomWinner?.name || "該当者なし",
+      bride: brideWinner?.name || "該当者なし",
     };
 
-    // ① 先にFirestore保存
+    // ⑤ Firestore保存
     await updateDoc(ref, {
-      winners: resultData,
+      phase: "lottery",
     });
 
-    // ② 結果セット
-    setResult(resultData);
+    await new Promise((r) => setTimeout(r, 300));
 
-    // ③ 最後にローディング解除
+    await updateDoc(ref, {
+      winners: resultData,
+      phase: "winner",
+    });
+
+    // ⑥ UI反映
+    setResult(resultData);
     setLoading(false);
-    // ⑥ 画面切り替え
+
+    // ⑦ フェーズ変更
     await updatePhase("winner");
   };
 
@@ -149,8 +164,10 @@ export default function LotteryPage() {
           <button
             style={styles.actionButton}
             onClick={async () => {
-                await updatePhase("closed");
-              router.push("/admin");
+              if (!quizId) return;
+
+              await updatePhase("closed");
+              router.push(`/admin/${quizId}`);
             }}
           >
             ← トップ画面へ戻る

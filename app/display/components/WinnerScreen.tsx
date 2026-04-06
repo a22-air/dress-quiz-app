@@ -5,7 +5,11 @@ import { doc, onSnapshot } from "firebase/firestore";
 import { db } from "@/app/lib/firebase";
 import confetti from "canvas-confetti";
 
-export default function WinnerScreen() {
+type Props = {
+  quizId: string;
+};
+
+export default function WinnerScreen({ quizId }: Props) {
   const [groom, setGroom] = useState("");
   const [bride, setBride] = useState("");
   const [show, setShow] = useState(false);
@@ -39,55 +43,61 @@ export default function WinnerScreen() {
   }, []);
 
   useEffect(() => {
-  if (!show) return;
+    if (!show) return;
 
-  setTimeout(() => setFlash(true), 0);
-  const flashTimeout = setTimeout(() => setFlash(false), 300);
+    setTimeout(() => setFlash(true), 0);
+    const flashTimeout = setTimeout(() => setFlash(false), 300);
 
-  const duration = 3000;
-  const end = Date.now() + duration;
+    const duration = 3000;
+    const end = Date.now() + duration;
 
-  const interval = setInterval(() => {
-    if (Date.now() > end) {
+    const interval = setInterval(() => {
+      if (Date.now() > end) {
+        clearInterval(interval);
+        return;
+      }
+
+      confetti({
+        particleCount: 6,
+        angle: 60,
+        spread: 55,
+        origin: { x: 0 },
+        colors: ["#c9a84c", "#f0d98a", "#fff"],
+      });
+
+      confetti({
+        particleCount: 6,
+        angle: 120,
+        spread: 55,
+        origin: { x: 1 },
+        colors: ["#c9a84c", "#f0d98a", "#fff"],
+      });
+    }, 100);
+
+    return () => {
+      clearTimeout(flashTimeout);
       clearInterval(interval);
-      return;
-    }
-
-    confetti({
-      particleCount: 6,
-      angle: 60,
-      spread: 55,
-      origin: { x: 0 },
-      colors: ["#c9a84c", "#f0d98a", "#fff"],
-    });
-
-    confetti({
-      particleCount: 6,
-      angle: 120,
-      spread: 55,
-      origin: { x: 1 },
-      colors: ["#c9a84c", "#f0d98a", "#fff"],
-    });
-  }, 100);
-
-  return () => {
-    clearTimeout(flashTimeout);
-    clearInterval(interval);
-  };
-}, [show]);
+    };
+  }, [show]);
 
   useEffect(() => {
-    const ref = doc(db, "quizzes", "test-quiz", "state", "current");
+    if (!quizId) return;
+
+    const ref = doc(db, "quizzes", quizId, "state", "current");
+
     const unsubscribe = onSnapshot(ref, (snap) => {
       if (!snap.exists()) return;
+
       const data = snap.data().winners;
+
       if (data) {
         setGroom(data.groom);
         setBride(data.bride);
       }
     });
+
     return () => unsubscribe();
-  }, []);
+  }, [quizId]);
 
   return (
     <div
@@ -219,67 +229,69 @@ export default function WinnerScreen() {
 
         {/* 当選者カード */}
         <div style={styles.winnersWrapper}>
+
           {/* 新郎側 */}
           <div style={styles.winnerCard}>
-            <p style={styles.winnerSideLabel}>新郎側</p>
-            <p style={styles.winnerSideLabelEn}>Groom&apos; Guest</p>
+            <div style={styles.labelBlock}>
+              <p style={styles.winnerSideLabel}>新郎側</p>
+              <p style={styles.winnerSideLabelEn}>Groom&apos;s Guest</p>
+            </div>
             <div style={styles.winnerCardDivider} />
-            <p
-              className={show ? "winner-name" : ""}
-              style={{
-                ...styles.winnerName,
-                opacity: show ? 1 : 0,
-                transition: "opacity 0.3s ease",
-              }}
-            >
-              {groom}
-            </p>
+            <div style={styles.nameBlock}>
+              <p
+                className={show ? "winner-name" : ""}
+                style={{
+                  ...styles.winnerName,
+                  opacity: show ? 1 : 0,
+                  transition: "opacity 0.3s ease",
+                }}
+              >
+                {groom || "該当者なし"}
+              </p>
+            </div>
           </div>
 
-          {/* 縦区切り */}
           <div style={styles.columnDivider} />
 
           {/* 新婦側 */}
           <div style={styles.winnerCard}>
-            <p style={styles.winnerSideLabel}>新婦側</p>
-            <p style={styles.winnerSideLabelEn}>Bride&apos;s Guest</p>
+            <div style={styles.labelBlock}>
+              <p style={styles.winnerSideLabel}>新婦側</p>
+              <p style={styles.winnerSideLabelEn}>Bride&apos;s Guest</p>
+            </div>
             <div style={styles.winnerCardDivider} />
-            <p
-              className={show ? "winner-name" : ""}
-              style={{
-                ...styles.winnerName,
-                opacity: show ? 1 : 0,
-                transition: "opacity 0.3s ease",
-                animationDelay: "0.15s",
-              }}
-            >
-              {bride}
-            </p>
+            <div style={styles.nameBlock}>
+              <p
+                className={show ? "winner-name" : ""}
+                style={{
+                  ...styles.winnerName,
+                  opacity: show ? 1 : 0,
+                  transition: "opacity 0.3s ease",
+                  animationDelay: "0.15s",
+                }}
+              >
+                {bride || "該当者なし"}
+              </p>
+            </div>
           </div>
+
         </div>
 
-        {/* おめでとうメッセージ */}
-        <p
-          style={{
-            ...styles.congratsText,
-            opacity: show ? 1 : 0,
-            transition: "opacity 1s ease 0.6s",
-          }}
-        >
+        <p style={{
+          ...styles.congratsText,
+          opacity: show ? 1 : 0,
+          transition: "opacity 1s ease 0.6s",
+        }}>
           おめでとうございます — Congratulations
         </p>
 
-        {/* 下部オーナメント */}
-        <div
-          style={{ ...styles.topOrnament, marginTop: "48px", marginBottom: 0 }}
-        >
+        <div style={{ ...styles.topOrnament, marginTop: "48px", marginBottom: 0 }}>
           <div style={styles.ornamentLineLong} />
           <div style={styles.ornamentDiamond} />
           <div style={styles.ornamentDiamond} />
-          <div
-            style={{ ...styles.ornamentLineLong, transform: "scaleX(-1)" }}
-          />
+          <div style={{ ...styles.ornamentLineLong, transform: "scaleX(-1)" }} />
         </div>
+
       </div>
     </div>
   );
@@ -309,8 +321,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     top: "10%",
     bottom: "10%",
     width: "1px",
-    background:
-      "linear-gradient(180deg, transparent, rgba(201,168,76,0.25), transparent)",
+    background: "linear-gradient(180deg, transparent, rgba(201,168,76,0.25), transparent)",
   },
   sideLineRight: {
     position: "absolute",
@@ -318,8 +329,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     top: "10%",
     bottom: "10%",
     width: "1px",
-    background:
-      "linear-gradient(180deg, transparent, rgba(201,168,76,0.25), transparent)",
+    background: "linear-gradient(180deg, transparent, rgba(201,168,76,0.25), transparent)",
   },
   card: {
     display: "flex",
@@ -364,10 +374,6 @@ const styles: { [key: string]: React.CSSProperties } = {
     textTransform: "uppercase",
     whiteSpace: "nowrap",
   },
-  eyebrow: {
-    fontSize: "48px",
-    marginBottom: "12px",
-  },
   mainTitle: {
     fontFamily: "'Cormorant Garamond', serif",
     fontSize: "clamp(52px, 7vw, 96px)" as unknown as string,
@@ -396,8 +402,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   dividerLine: {
     flex: 1,
     height: "1px",
-    background:
-      "linear-gradient(90deg, transparent, rgba(201,168,76,0.4), transparent)",
+    background: "linear-gradient(90deg, transparent, rgba(201,168,76,0.4), transparent)",
   },
   dividerIcon: {
     fontFamily: "'Cormorant Garamond', serif",
@@ -406,18 +411,25 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   winnersWrapper: {
     display: "flex",
-    alignItems: "center",
+    alignItems: "stretch", // 両カードの高さを揃える
     justifyContent: "center",
     width: "100%",
-    gap: "0",
   },
   winnerCard: {
     flex: 1,
-    maxWidth: "380px",
+    maxWidth: "420px",
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
     padding: "32px 40px",
+  },
+  // ラベルブロックを固定高さにして上下位置を揃える
+  labelBlock: {
+    height: "80px",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
   },
   winnerSideLabel: {
     fontFamily: "'Cormorant Garamond', serif",
@@ -433,13 +445,20 @@ const styles: { [key: string]: React.CSSProperties } = {
     fontStyle: "italic",
     color: "rgba(240,217,138,0.35)",
     letterSpacing: "0.2em",
-    marginBottom: "20px",
   },
   winnerCardDivider: {
     width: "40px",
     height: "1px",
     background: "rgba(201,168,76,0.3)",
-    marginBottom: "24px",
+    margin: "20px 0 24px",
+    flexShrink: 0,
+  },
+  // 名前エリアを固定高さ・中央揃えにして両側を統一
+  nameBlock: {
+    height: "120px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
   },
   winnerName: {
     fontFamily: "'Cormorant Garamond', serif",
@@ -448,12 +467,12 @@ const styles: { [key: string]: React.CSSProperties } = {
     color: "#ffffff",
     letterSpacing: "0.12em",
     textAlign: "center",
+    lineHeight: 1.2,
   },
   columnDivider: {
     width: "1px",
-    height: "160px",
-    background:
-      "linear-gradient(180deg, transparent, rgba(201,168,76,0.3), transparent)",
+    alignSelf: "stretch",
+    background: "linear-gradient(180deg, transparent, rgba(201,168,76,0.3), transparent)",
     flexShrink: 0,
     margin: "0 32px",
   },
