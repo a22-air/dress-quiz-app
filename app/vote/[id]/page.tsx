@@ -13,6 +13,7 @@ import {
 } from "firebase/firestore";
 import { db } from "@/app/lib/firebase";
 import { useParams } from "next/navigation";
+import { Timestamp } from "firebase/firestore";
 
 export default function VotePage() {
   const [name, setName] = useState("");
@@ -26,72 +27,98 @@ export default function VotePage() {
   const params = useParams();
   const quizId = params.id as string;
 
+  // 🔹 日付変換（安全版）
+  const convertToDate = (
+    time: Timestamp | Date | string | number | null | undefined
+  ): Date | null => {
+    if (!time) return null;
+    if (time instanceof Timestamp) return time.toDate();
+    if (time instanceof Date) return time;
+    return new Date(time);
+  };
+
+  // 🔹 state取得
   useEffect(() => {
+    if (!quizId) return;
+
     const fetchState = async () => {
-      const ref = doc(db, "quizzes", "test-quiz", "state", "current");
-      const snap = await getDoc(ref);
-      if (snap.exists()) {
+      try {
+        const ref = doc(db, "quizzes", quizId, "state", "current");
+        const snap = await getDoc(ref);
+
+        if (!snap.exists()) return;
+
         const data = snap.data();
-        const now = Date.now();
-        const startTime = data.startTime?.toMillis
-          ? data.startTime.toMillis()
-          : data.startTime;
-        const endTime = data.endTime?.toMillis
-          ? data.endTime.toMillis()
-          : data.endTime;
-        setIsVotingOpen(now >= startTime && now <= endTime);
+
+        const start = convertToDate(data.startTime);
+        const end = convertToDate(data.endTime);
+
+        if (!start || !end) return;
+
+        const now = new Date();
+        setIsVotingOpen(now >= start && now <= end);
+      } catch (e) {
+        console.error("state取得エラー", e);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
+
     fetchState();
-  }, []);
+  }, [quizId]);
 
+  // 🔹 choices取得
   useEffect(() => {
+    if (!quizId) return;
+
     const fetchChoices = async () => {
-      const ref = doc(db, "quizzes", "test-quiz", "state", "current");
-      const snap = await getDoc(ref);
-      if (snap.exists()) {
-        const data = snap.data();
-        setChoices(data.choices || []);
+      try {
+        const ref = doc(db, "quizzes", quizId, "state", "current");
+        const snap = await getDoc(ref);
+
+        if (snap.exists()) {
+          const data = snap.data();
+          setChoices(data.choices || []);
+        }
+      } catch (e) {
+        console.error("choices取得エラー", e);
       }
     };
+
     fetchChoices();
-  }, []);
+  }, [quizId]);
 
+  // 🔹 送信
   const handleSubmit = async () => {
-  if (!name.trim() || !answer) {
-    alert("名前と回答を入力してください");
-    return;
-  }
-
-  try {
-    const quizId = params.id as string;
-
-    const votesRef = collection(db, "quizzes", quizId, "votes");
-
-    // 同一クイズ内で名前重複チェック
-    const q = query(votesRef, where("name", "==", name.trim()));
-    const snap = await getDocs(q);
-
-    if (!snap.empty) {
-      alert("この名前では既に投票済みです。");
+    if (!name.trim() || !answer) {
+      alert("名前と回答を入力してください");
       return;
     }
 
-    await addDoc(votesRef, {
-      name: name.trim(),
-      group,
-      answer,
-      createdAt: serverTimestamp(),
-    });
+    try {
+      const votesRef = collection(db, "quizzes", quizId, "votes");
 
-    setSubmitted(true);
+      const q = query(votesRef, where("name", "==", name.trim()));
+      const snap = await getDocs(q);
 
-  } catch (e) {
-    console.error("送信エラー:", e);
-    alert("送信に失敗しました");
-  }
-};
+      if (!snap.empty) {
+        alert("この名前では既に投票済みです。");
+        return;
+      }
+
+      await addDoc(votesRef, {
+        name: name.trim(),
+        group,
+        answer,
+        createdAt: serverTimestamp(),
+      });
+
+      setSubmitted(true);
+    } catch (e) {
+      console.error("送信エラー:", e);
+      alert("送信に失敗しました");
+    }
+  };
 
   // ローディング
   if (loading) {
