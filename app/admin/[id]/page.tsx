@@ -32,8 +32,10 @@ export default function AdminPage() {
 
     if (password === process.env.NEXT_PUBLIC_ADMIN_PASSWORD) {
       sessionStorage.setItem("admin-auth", "true");
+      console.log("env:", process.env.NEXT_PUBLIC_ADMIN_PASSWORD);
     } else {
       alert("パスワードが違います");
+      console.log("env:", process.env.NEXT_PUBLIC_ADMIN_PASSWORD);
       router.push("/");
     }
   }, [router]);
