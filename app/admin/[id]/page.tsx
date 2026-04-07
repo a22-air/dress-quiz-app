@@ -36,7 +36,7 @@ export default function AdminPage() {
     } else {
       alert("パスワードが違います");
       console.log("env:", process.env.NEXT_PUBLIC_ADMIN_PASSWORD);
-      router.push("/");
+      // router.push("/");
     }
   }, [router]);
 
