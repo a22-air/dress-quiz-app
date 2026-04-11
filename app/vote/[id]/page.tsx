@@ -23,6 +23,7 @@ export default function VotePage() {
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isVotingOpen, setIsVotingOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const params = useParams();
   const quizId = params.id as string;
@@ -36,6 +37,15 @@ export default function VotePage() {
     if (time instanceof Date) return time;
     return new Date(time);
   };
+
+  // 🔹 localStorage で投票済みチェック
+  useEffect(() => {
+    if (!quizId) return;
+    const key = `voted_${quizId}`;
+    if (localStorage.getItem(key) === "true") {
+      setSubmitted(true);
+    }
+  }, [quizId]);
 
   // 🔹 state取得
   useEffect(() => {
@@ -95,6 +105,9 @@ export default function VotePage() {
       return;
     }
 
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+
     try {
       const votesRef = collection(db, "quizzes", quizId, "votes");
 
@@ -113,10 +126,13 @@ export default function VotePage() {
         createdAt: serverTimestamp(),
       });
 
+      localStorage.setItem(`voted_${quizId}`, "true");
       setSubmitted(true);
     } catch (e) {
       console.error("送信エラー:", e);
       alert("送信に失敗しました");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -274,7 +290,7 @@ export default function VotePage() {
         </div>
 
         {/* 送信 */}
-        <button style={styles.submitButton} onClick={handleSubmit}>
+        <button style={isSubmitting ? { ...styles.submitButton, ...styles.submitButtonDisabled } : styles.submitButton} onClick={handleSubmit} disabled={isSubmitting}>
           ✦ 投票する ✦
         </button>
       </div>
@@ -449,6 +465,10 @@ const styles: { [key: string]: React.CSSProperties } = {
     color: "#1a1612",
     letterSpacing: "0.2em",
     boxShadow: "0 4px 16px rgba(139,105,20,0.2)",
+  },
+  submitButtonDisabled: {
+    opacity: 0.5,
+    cursor: "not-allowed" as const,
   },
   footerOrnament: {
     marginTop: "40px",
