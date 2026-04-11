@@ -415,12 +415,11 @@ const styles: { [key: string]: React.CSSProperties } = {
     fontWeight: 400,
   },
   choicesGrid: {
-    display: "flex",
-    flexWrap: "wrap" as const,
+    display: "grid",
+    gridTemplateColumns: "repeat(2, 1fr)",
     gap: "10px",
   },
   choiceButton: {
-    flex: 1,
     padding: "10px 20px",
     background: "transparent",
     border: "1px solid rgba(201,168,76,0.25)",
