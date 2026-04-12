@@ -38,14 +38,20 @@ export default function VotePage() {
     return new Date(time);
   };
 
+  // 本番環境と開発環境で切り分け
   // 🔹 localStorage で投票済みチェック
   useEffect(() => {
-    if (!quizId) return;
-    const key = `voted_${quizId}`;
-    if (localStorage.getItem(key) === "true") {
-      setSubmitted(true);
-    }
-  }, [quizId]);
+  if (!quizId) return;
+
+  // 開発環境はリターン
+  if (process.env.NEXT_PUBLIC_USE_VOTE_CHECK !== "true") return;
+
+  // 本番ではローカルストレージでチェックする
+  const key = `voted_${quizId}`;
+  if (localStorage.getItem(key) === "true") {
+    setSubmitted(true);
+  }
+}, [quizId]);
 
   // 🔹 state取得
   useEffect(() => {
