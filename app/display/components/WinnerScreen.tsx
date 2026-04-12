@@ -16,7 +16,7 @@ export default function WinnerScreen({ quizId }: Props) {
   const [flash, setFlash] = useState(false);
   const [dark, setDark] = useState(true);
 
-  const [sparkles] = useState<
+  const [sparkles, setSparkles] = useState<
     {
       id: number;
       x: number;
@@ -24,15 +24,20 @@ export default function WinnerScreen({ quizId }: Props) {
       delay: number;
       size: number;
     }[]
-  >(() =>
-    Array.from({ length: 24 }, (_, i) => ({
-      id: i,
-      x: Math.random() * 100,
-      y: Math.random() * 100,
-      delay: Math.random() * 4,
-      size: Math.random() * 10 + 6,
-    }))
-  );
+  >([]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setSparkles(
+      Array.from({ length: 24 }, (_, i) => ({
+        id: i,
+        x: Math.random() * 100,
+        y: Math.random() * 100,
+        delay: Math.random() * 4,
+        size: Math.random() * 10 + 6,
+      }))
+    );
+  }, []);
 
   useEffect(() => {
     const timer = setTimeout(() => {

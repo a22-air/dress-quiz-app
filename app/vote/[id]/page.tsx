@@ -23,6 +23,8 @@ export default function VotePage() {
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isVotingOpen, setIsVotingOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState(false);
 
   const params = useParams();
   const quizId = params.id as string;
@@ -36,6 +38,21 @@ export default function VotePage() {
     if (time instanceof Date) return time;
     return new Date(time);
   };
+
+  // 本番環境と開発環境で切り分け
+  // 🔹 localStorage で投票済みチェック
+  useEffect(() => {
+  if (!quizId) return;
+
+  // 開発環境はリターン
+  if (process.env.NEXT_PUBLIC_USE_VOTE_CHECK !== "true") return;
+
+  // 本番ではローカルストレージでチェックする
+  const key = `voted_${quizId}`;
+  if (localStorage.getItem(key) === "true") {
+    setSubmitted(true);
+  }
+}, [quizId]);
 
   // 🔹 state取得
   useEffect(() => {
@@ -95,6 +112,16 @@ export default function VotePage() {
       return;
     }
 
+    if (isSubmitting) return;
+
+    if (!navigator.onLine) {
+      setSubmitError(true);
+      return;
+    }
+
+    setIsSubmitting(true);
+    setSubmitError(false);
+
     try {
       const votesRef = collection(db, "quizzes", quizId, "votes");
 
@@ -113,10 +140,13 @@ export default function VotePage() {
         createdAt: serverTimestamp(),
       });
 
+      localStorage.setItem(`voted_${quizId}`, "true");
       setSubmitted(true);
     } catch (e) {
       console.error("送信エラー:", e);
-      alert("送信に失敗しました");
+      setSubmitError(true);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -274,9 +304,16 @@ export default function VotePage() {
         </div>
 
         {/* 送信 */}
-        <button style={styles.submitButton} onClick={handleSubmit}>
+        <button style={isSubmitting ? { ...styles.submitButton, ...styles.submitButtonDisabled } : styles.submitButton} onClick={handleSubmit} disabled={isSubmitting}>
           ✦ 投票する ✦
         </button>
+
+        {submitError && (
+          <div style={styles.errorBox}>
+            <p style={styles.errorText}>通信エラーが発生しました</p>
+            <p style={styles.errorSubText}>もう一度「投票する」を押してください</p>
+          </div>
+        )}
       </div>
 
       <div style={styles.footerOrnament}>
@@ -415,12 +452,11 @@ const styles: { [key: string]: React.CSSProperties } = {
     fontWeight: 400,
   },
   choicesGrid: {
-    display: "flex",
-    flexWrap: "wrap" as const,
+    display: "grid",
+    gridTemplateColumns: "repeat(2, 1fr)",
     gap: "10px",
   },
   choiceButton: {
-    flex: 1,
     padding: "10px 20px",
     background: "transparent",
     border: "1px solid rgba(201,168,76,0.25)",
@@ -450,6 +486,33 @@ const styles: { [key: string]: React.CSSProperties } = {
     color: "#1a1612",
     letterSpacing: "0.2em",
     boxShadow: "0 4px 16px rgba(139,105,20,0.2)",
+  },
+  submitButtonDisabled: {
+    opacity: 0.5,
+    cursor: "not-allowed" as const,
+  },
+  errorBox: {
+    marginTop: "16px",
+    padding: "14px 16px",
+    background: "rgba(80,20,20,0.06)",
+    border: "1px solid rgba(200,80,80,0.25)",
+    textAlign: "center" as const,
+  },
+  errorText: {
+    fontFamily: "'Zen Kaku Gothic New', sans-serif",
+    fontSize: "12px",
+    fontWeight: 300,
+    color: "#b05050",
+    letterSpacing: "0.1em",
+    marginBottom: "4px",
+  },
+  errorSubText: {
+    fontFamily: "'Zen Kaku Gothic New', sans-serif",
+    fontSize: "11px",
+    fontWeight: 300,
+    color: "#b05050",
+    letterSpacing: "0.08em",
+    opacity: 0.8,
   },
   footerOrnament: {
     marginTop: "40px",

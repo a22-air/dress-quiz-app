@@ -1,44 +1,50 @@
 "use client";
 
 import { useRouter, useParams } from "next/navigation";
-import { doc, updateDoc } from "firebase/firestore";
+import { useEffect, useState } from "react";
+import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/app/lib/firebase";
-import { useEffect } from "react";
+import Toast from "@/app/components/Toast";
 
 export default function AdminPage() {
   const router = useRouter();
   const params = useParams();
   const quizId = params.id as string;
-
-  const updatePhase = async (phase: string) => {
-    if (!quizId) return;
-
-    try {
-      await updateDoc(doc(db, "quizzes", quizId, "state", "current"), {
-        phase: phase,
-      });
-      console.log("更新成功:", phase);
-    } catch (error) {
-      console.error("更新エラー:", error);
-    }
-  };
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    const isAuthed = sessionStorage.getItem("admin-auth");
+    if (!quizId) return;
 
+    const sessionKey = `admin-auth-${quizId}`;
+    const isAuthed = sessionStorage.getItem(sessionKey);
     if (isAuthed === "true") return;
 
-    const password = prompt("パスワードを入力してください");
+    const checkPassword = async () => {
+      const snap = await getDoc(doc(db, "quizzes", quizId, "state", "current"));
+      const adminPassword = snap.exists() ? snap.data().adminPassword : null;
 
-    if (password === process.env.NEXT_PUBLIC_ADMIN_PASSWORD) {
-      sessionStorage.setItem("admin-auth", "true");
-      console.log("env:", process.env.NEXT_PUBLIC_ADMIN_PASSWORD);
-    } else {
-      alert("パスワードが違います");
-      console.log("env:", process.env.NEXT_PUBLIC_ADMIN_PASSWORD);
-      // router.push("/");
-    }
-  }, [router]);
+      while (true) {
+        const input = prompt("パスワードを入力してください");
+
+        // キャンセル押した場合
+        if (input === null) {
+          router.push("/");
+          return;
+        }
+
+        // 正解
+        if (input && adminPassword && input === adminPassword) {
+          sessionStorage.setItem(sessionKey, "true");
+          return;
+        }
+
+        // 不正解
+        alert("パスワードが違います");
+      }
+    };
+
+    checkPassword();
+  }, [quizId, router]);
 
   if (!quizId) {
     return <div>読み込み中...</div>;
@@ -46,6 +52,9 @@ export default function AdminPage() {
 
   return (
     <>
+      {errorMessage && (
+        <Toast message={errorMessage} onClose={() => setErrorMessage(null)} />
+      )}
       <div style={styles.container}>
         <div style={styles.ornament}>
           <div style={styles.ornamentLine} />
@@ -64,10 +73,8 @@ export default function AdminPage() {
 
             <button
               style={styles.navButton}
-              onClick={async () => {
+              onClick={() => {
                 if (!quizId) return;
-
-                await updatePhase("result");
                 router.push(`/admin/result/${quizId}`);
               }}
               onMouseEnter={(e) =>
@@ -93,10 +100,8 @@ export default function AdminPage() {
 
             <button
               style={{ ...styles.navButton, marginBottom: 0 }}
-              onClick={async () => {
+              onClick={() => {
                 if (!quizId) return;
-
-                await updatePhase("lottery");
                 router.push(`/admin/lottery/${quizId}`);
               }}
               onMouseEnter={(e) =>

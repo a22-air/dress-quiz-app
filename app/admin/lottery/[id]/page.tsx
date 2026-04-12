@@ -2,12 +2,14 @@
 
 import { useState } from "react";
 import { useRouter, useParams } from "next/navigation";
+import Toast from "@/app/components/Toast";
 import {
   doc,
   updateDoc,
   getDoc,
   getDocs,
   collection,
+  serverTimestamp,
 } from "firebase/firestore";
 import { db } from "@/app/lib/firebase";
 
@@ -27,83 +29,89 @@ export default function LotteryPage() {
     groom: string;
     bride: string;
   }>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const updatePhase = async (phase: string) => {
-    if (!quizId) return;
 
-    await updateDoc(doc(db, "quizzes", quizId, "state", "current"), {
-      phase: phase,
-    });
-  };
 
   const startLottery = async () => {
     if (!quizId) return;
 
     setLoading(true);
 
-    // ① 正解取得
-    const ref = doc(db, "quizzes", quizId, "state", "current");
-    const snap = await getDoc(ref);
+    try {
+      // ① 正解取得
+      const ref = doc(db, "quizzes", quizId, "state", "current");
+      const snap = await getDoc(ref);
 
-    if (!snap.exists()) {
+      if (!snap.exists()) {
+        setLoading(false);
+        return;
+      }
+
+      const correctAnswer = snap.data().correctAnswer;
+
+      // ② 投票データ取得
+      const votesRef = collection(db, "quizzes", quizId, "votes");
+      const snapshot = await getDocs(votesRef);
+
+      const votes: Vote[] = [];
+      snapshot.forEach((doc) => {
+        votes.push(doc.data() as Vote);
+      });
+
+      // ③ 正解者抽出
+      const correctUsers = votes.filter((u) => u.answer === correctAnswer);
+
+      const groomUsers = correctUsers.filter((u) => u.group === "groom");
+      const brideUsers = correctUsers.filter((u) => u.group === "bride");
+
+      // ④ 抽選
+      const pickWinner = (users: Vote[]) => {
+        if (users.length === 0) return null;
+        const index = Math.floor(Math.random() * users.length);
+        return users[index];
+      };
+
+      const groomWinner = pickWinner(groomUsers);
+      const brideWinner = pickWinner(brideUsers);
+
+      const resultData = {
+        groom: groomWinner?.name || "該当者なし",
+        bride: brideWinner?.name || "該当者なし",
+      };
+
+      // ⑤ Firestore保存（スロット演出のため5秒待機）
+      await updateDoc(ref, {
+        phase: "lottery",
+        displayUpdatedAt: serverTimestamp(),
+        lotteryUsers: {
+          groom: groomUsers.map((u) => u.name),
+          bride: brideUsers.map((u) => u.name),
+        },
+        // winners はここでは保存しない（スロット中に結果がわからないように）
+      });
+      await new Promise((r) => setTimeout(r, 4000));
+      await updateDoc(ref, {
+        phase: "winner",
+        displayUpdatedAt: serverTimestamp(),
+        winners: resultData, // 発表と同時に保存
+      });
+
+      // ⑥ UI反映
+      setResult(resultData);
+    } catch (error) {
+      console.error("抽選エラー:", error);
+      setErrorMessage("通信エラーが発生しました。もう一度お試しください。");
+    } finally {
       setLoading(false);
-      return;
     }
-
-    const correctAnswer = snap.data().correctAnswer;
-
-    // ② 投票データ取得（ここ重要🔥）
-    const votesRef = collection(db, "quizzes", quizId, "votes");
-    const snapshot = await getDocs(votesRef);
-
-    const votes: Vote[] = [];
-    snapshot.forEach((doc) => {
-      votes.push(doc.data() as Vote);
-    });
-
-    // ③ 正解者抽出
-    const correctUsers = votes.filter((u) => u.answer === correctAnswer);
-
-    const groomUsers = correctUsers.filter((u) => u.group === "groom");
-    const brideUsers = correctUsers.filter((u) => u.group === "bride");
-
-    // ④ 抽選
-    const pickWinner = (users: Vote[]) => {
-      if (users.length === 0) return null;
-      const index = Math.floor(Math.random() * users.length);
-      return users[index];
-    };
-
-    const groomWinner = pickWinner(groomUsers);
-    const brideWinner = pickWinner(brideUsers);
-
-    const resultData = {
-      groom: groomWinner?.name || "該当者なし",
-      bride: brideWinner?.name || "該当者なし",
-    };
-
-    // ⑤ Firestore保存
-    await updateDoc(ref, {
-      phase: "lottery",
-    });
-
-    await new Promise((r) => setTimeout(r, 300));
-
-    await updateDoc(ref, {
-      winners: resultData,
-      phase: "winner",
-    });
-
-    // ⑥ UI反映
-    setResult(resultData);
-    setLoading(false);
-
-    // ⑦ フェーズ変更
-    await updatePhase("winner");
   };
 
   return (
     <div style={styles.container}>
+      {errorMessage && (
+        <Toast message={errorMessage} onClose={() => setErrorMessage(null)} />
+      )}
       <div style={styles.ornament}>
         <div style={styles.ornamentLine} />
         <div style={styles.ornamentDiamond} />
@@ -163,10 +171,8 @@ export default function LotteryPage() {
           )}
           <button
             style={styles.actionButton}
-            onClick={async () => {
+            onClick={() => {
               if (!quizId) return;
-
-              await updatePhase("closed");
               router.push(`/admin/${quizId}`);
             }}
           >

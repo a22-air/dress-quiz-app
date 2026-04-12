@@ -2,10 +2,10 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { doc, updateDoc, collection, getDocs } from "firebase/firestore";
+import { doc, updateDoc, collection, getDocs, getDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "@/app/lib/firebase";
-import { getDoc } from "firebase/firestore";
 import { useParams } from "next/navigation";
+import Toast from "@/app/components/Toast";
 
 type Vote = {
   name: string;
@@ -20,6 +20,7 @@ export default function ResultPage() {
   const [wrongUsers, setWrongUsers] = useState<Vote[]>([]);
   const [correctAnswer, setCorrectAnswer] = useState("");
   const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const params = useParams();
   const quizId = params.id as string;
@@ -27,9 +28,15 @@ export default function ResultPage() {
   const updatePhase = async (phase: string) => {
     if (!quizId) return;
 
-    await updateDoc(doc(db, "quizzes", quizId, "state", "current"), {
-      phase: phase,
-    });
+    try {
+      await updateDoc(doc(db, "quizzes", quizId, "state", "current"), {
+        phase: phase,
+        displayUpdatedAt: serverTimestamp(),
+      });
+    } catch (error) {
+      console.error("更新エラー:", error);
+      setErrorMessage("通信エラーが発生しました。もう一度お試しください。");
+    }
   };
 
   useEffect(() => {
@@ -107,6 +114,9 @@ export default function ResultPage() {
 
   return (
     <div style={styles.container}>
+      {errorMessage && (
+        <Toast message={errorMessage} onClose={() => setErrorMessage(null)} />
+      )}
       <div style={styles.ornament}>
         <div style={styles.ornamentLine} />
         <div style={styles.ornamentDiamond} />
@@ -123,15 +133,24 @@ export default function ResultPage() {
         <p style={styles.answerCount}>正解者 {correctUsers.length}名</p>
       </div>
 
+      {/* ディスプレイ表示ボタン */}
+      <button
+        style={styles.displayButton}
+        onClick={async () => {
+          if (!quizId) return;
+          await updatePhase("result");
+        }}
+      >
+        ディスプレイに結果を表示
+      </button>
+
       {/* 抽選ボタン */}
       <button
         style={styles.lotteryButton}
-        onClick={async () => {
-              if (!quizId) return;
-
-              await updatePhase("lottery");
-              router.push(`/admin/lottery/${quizId}`);
-            }}
+        onClick={() => {
+          if (!quizId) return;
+          router.push(`/admin/lottery/${quizId}`);
+        }}
       >
         ✦ 抽選スタート ✦
       </button>
@@ -211,10 +230,8 @@ export default function ResultPage() {
           borderRadius: "8px",
           boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
         }}
-        onClick={async () => {
+        onClick={() => {
           if (!quizId) return;
-
-          await updatePhase("closed");
           router.push(`/admin/${quizId}`);
         }}
       >
@@ -345,6 +362,20 @@ const styles: { [key: string]: React.CSSProperties } = {
     color: "#1a1612",
     letterSpacing: "0.05em",
     padding: "5px 0",
+  },
+  displayButton: {
+    width: "100%",
+    maxWidth: "520px",
+    padding: "14px 20px",
+    background: "transparent",
+    border: "1px solid rgba(201,168,76,0.4)",
+    cursor: "pointer",
+    fontFamily: "'Zen Kaku Gothic New', sans-serif",
+    fontSize: "12px",
+    fontWeight: 300,
+    color: "#c9a84c",
+    letterSpacing: "0.2em",
+    marginBottom: "10px",
   },
   lotteryButton: {
     width: "100%",
