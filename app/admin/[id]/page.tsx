@@ -17,7 +17,6 @@ export default function AdminPage() {
       await updateDoc(doc(db, "quizzes", quizId, "state", "current"), {
         phase: phase,
       });
-      console.log("更新成功:", phase);
     } catch (error) {
       console.error("更新エラー:", error);
     }
@@ -32,11 +31,8 @@ export default function AdminPage() {
 
     if (password === process.env.NEXT_PUBLIC_ADMIN_PASSWORD) {
       sessionStorage.setItem("admin-auth", "true");
-      console.log("env:", process.env.NEXT_PUBLIC_ADMIN_PASSWORD);
     } else {
       alert("パスワードが違います");
-      console.log("env:", process.env.NEXT_PUBLIC_ADMIN_PASSWORD);
-      // router.push("/");
     }
   }, [router]);
 
