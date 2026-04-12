@@ -24,7 +24,7 @@ export default function VotePage() {
   const [loading, setLoading] = useState(true);
   const [isVotingOpen, setIsVotingOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const params = useParams();
   const quizId = params.id as string;
@@ -108,19 +108,19 @@ export default function VotePage() {
   // 🔹 送信
   const handleSubmit = async () => {
     if (!name.trim() || !answer) {
-      alert("名前と回答を入力してください");
+      setSubmitError("名前とドレスの色を選択してください");
       return;
     }
 
     if (isSubmitting) return;
 
     if (!navigator.onLine) {
-      setSubmitError(true);
+      setSubmitError("通信エラーが発生しました。もう一度お試しください");
       return;
     }
 
     setIsSubmitting(true);
-    setSubmitError(false);
+    setSubmitError(null);
 
     try {
       const votesRef = collection(db, "quizzes", quizId, "votes");
@@ -129,7 +129,7 @@ export default function VotePage() {
       const snap = await getDocs(q);
 
       if (!snap.empty) {
-        alert("この名前では既に投票済みです。");
+        setSubmitError("この名前では既に投票済みです");
         return;
       }
 
@@ -144,7 +144,7 @@ export default function VotePage() {
       setSubmitted(true);
     } catch (e) {
       console.error("送信エラー:", e);
-      setSubmitError(true);
+      setSubmitError("通信エラーが発生しました。もう一度お試しください");
     } finally {
       setIsSubmitting(false);
     }
@@ -310,8 +310,7 @@ export default function VotePage() {
 
         {submitError && (
           <div style={styles.errorBox}>
-            <p style={styles.errorText}>通信エラーが発生しました</p>
-            <p style={styles.errorSubText}>もう一度「投票する」を押してください</p>
+            <p style={styles.errorText}>{submitError}</p>
           </div>
         )}
       </div>
