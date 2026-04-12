@@ -2,7 +2,7 @@
 
 import { useRouter, useParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "@/app/lib/firebase";
 
 export default function AdminPage() {
@@ -14,7 +14,22 @@ export default function AdminPage() {
   const [passwordInput, setPasswordInput] = useState("");
   const [passwordError, setPasswordError] = useState(false);
   const [checking, setChecking] = useState(false);
+  const [resetting, setResetting] = useState(false);
+  const [confirmReset, setConfirmReset] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const handleReset = async () => {
+    setResetting(true);
+    setConfirmReset(false);
+    try {
+      await updateDoc(doc(db, "quizzes", quizId, "state", "current"), {
+        phase: "closed",
+        displayUpdatedAt: serverTimestamp(),
+      });
+    } finally {
+      setResetting(false);
+    }
+  };
 
   useEffect(() => {
     if (!quizId) return;
@@ -171,6 +186,34 @@ export default function AdminPage() {
           </button>
         </div>
       </div>
+
+      {confirmReset ? (
+        <div style={styles.confirmBox}>
+          <p style={styles.confirmText}>ディスプレイをトップ画面に戻しますか？</p>
+          <div style={styles.confirmRow}>
+            <button
+              style={styles.confirmYes}
+              onClick={handleReset}
+              disabled={resetting}
+            >
+              {resetting ? "処理中..." : "戻す"}
+            </button>
+            <button
+              style={styles.confirmNo}
+              onClick={() => setConfirmReset(false)}
+            >
+              キャンセル
+            </button>
+          </div>
+        </div>
+      ) : (
+        <button
+          style={styles.resetButton}
+          onClick={() => setConfirmReset(true)}
+        >
+          ディスプレイをトップ画面に戻す
+        </button>
+      )}
 
       <div style={styles.footerOrnament}>
         <div style={styles.footerLine} />
@@ -346,6 +389,65 @@ const styles: { [key: string]: React.CSSProperties } = {
   navButtonArrow: {
     fontSize: "18px",
     color: "#c9a84c",
+  },
+  resetButton: {
+    marginTop: "24px",
+    width: "100%",
+    maxWidth: "440px",
+    padding: "12px 20px",
+    background: "transparent",
+    border: "1px solid rgba(200,80,80,0.25)",
+    cursor: "pointer",
+    fontFamily: "'Zen Kaku Gothic New', sans-serif",
+    fontSize: "11px",
+    fontWeight: 300,
+    color: "rgba(180,80,80,0.7)",
+    letterSpacing: "0.2em",
+  },
+  confirmBox: {
+    marginTop: "24px",
+    width: "100%",
+    maxWidth: "440px",
+    padding: "16px 20px",
+    border: "1px solid rgba(200,80,80,0.25)",
+    background: "rgba(200,80,80,0.04)",
+  },
+  confirmText: {
+    fontFamily: "'Zen Kaku Gothic New', sans-serif",
+    fontSize: "11px",
+    fontWeight: 300,
+    color: "rgba(180,80,80,0.8)",
+    letterSpacing: "0.15em",
+    marginBottom: "12px",
+    textAlign: "center" as const,
+  },
+  confirmRow: {
+    display: "flex",
+    gap: "8px",
+  },
+  confirmYes: {
+    flex: 1,
+    padding: "10px",
+    background: "rgba(180,80,80,0.12)",
+    border: "1px solid rgba(200,80,80,0.35)",
+    cursor: "pointer",
+    fontFamily: "'Zen Kaku Gothic New', sans-serif",
+    fontSize: "11px",
+    fontWeight: 300,
+    color: "rgba(180,80,80,0.9)",
+    letterSpacing: "0.2em",
+  },
+  confirmNo: {
+    flex: 1,
+    padding: "10px",
+    background: "transparent",
+    border: "1px solid rgba(201,168,76,0.2)",
+    cursor: "pointer",
+    fontFamily: "'Zen Kaku Gothic New', sans-serif",
+    fontSize: "11px",
+    fontWeight: 300,
+    color: "#9e9080",
+    letterSpacing: "0.2em",
   },
   footerOrnament: {
     marginTop: "48px",
