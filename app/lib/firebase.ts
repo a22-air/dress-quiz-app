@@ -1,5 +1,6 @@
 import { initializeApp } from "firebase/app"
 import { getFirestore } from "firebase/firestore"
+import { getAuth, signInAnonymously } from "firebase/auth"
 
 const firebaseConfig = {
   apiKey: "AIzaSyD74Qc1CJsMLtot7PJ_wdwWa6z6f2tGEIw",
@@ -14,3 +15,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig)
 
 export const db = getFirestore(app)
+export const auth = getAuth(app)
+
+// 全ページで Firestore にアクセスできるよう匿名ログインを自動実行
+signInAnonymously(auth).catch(console.error)
