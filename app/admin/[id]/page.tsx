@@ -1,8 +1,6 @@
 "use client";
 
 import { useRouter, useParams } from "next/navigation";
-import { doc, updateDoc } from "firebase/firestore";
-import { db } from "@/app/lib/firebase";
 import { useEffect, useState } from "react";
 import Toast from "@/app/components/Toast";
 
@@ -11,19 +9,6 @@ export default function AdminPage() {
   const params = useParams();
   const quizId = params.id as string;
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
-  const updatePhase = async (phase: string) => {
-    if (!quizId) return;
-
-    try {
-      await updateDoc(doc(db, "quizzes", quizId, "state", "current"), {
-        phase: phase,
-      });
-    } catch (error) {
-      console.error("更新エラー:", error);
-      setErrorMessage("通信エラーが発生しました。もう一度お試しください。");
-    }
-  };
 
   useEffect(() => {
     const isAuthed = sessionStorage.getItem("admin-auth");
@@ -66,10 +51,8 @@ export default function AdminPage() {
 
             <button
               style={styles.navButton}
-              onClick={async () => {
+              onClick={() => {
                 if (!quizId) return;
-
-                await updatePhase("result");
                 router.push(`/admin/result/${quizId}`);
               }}
               onMouseEnter={(e) =>
@@ -95,10 +78,8 @@ export default function AdminPage() {
 
             <button
               style={{ ...styles.navButton, marginBottom: 0 }}
-              onClick={async () => {
+              onClick={() => {
                 if (!quizId) return;
-
-                await updatePhase("lottery");
                 router.push(`/admin/lottery/${quizId}`);
               }}
               onMouseEnter={(e) =>

@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { doc, onSnapshot } from "firebase/firestore"
 import { db } from "@/app/lib/firebase"
 import { useParams } from "next/navigation";
@@ -11,8 +11,9 @@ import LotteryScreen from "../components/LotteryScreen"
 import WinnerScreen from "../components/WinnerScreen"
 
 export default function DisplayPage() {
-  const [status, setStatus] = useState("waiting")
+  const [status, setStatus] = useState("closed")
   const [isOffline, setIsOffline] = useState(false)
+  const isFirstLoad = useRef(true)
 
   const params = useParams();
   const quizId = params.id as string;
@@ -35,6 +36,10 @@ export default function DisplayPage() {
       doc(db, "quizzes", quizId, "state", "current"),
       (docSnap) => {
         setIsOffline(false)
+        if (isFirstLoad.current) {
+          isFirstLoad.current = false;
+          return;
+        }
         const data = docSnap.data();
         if (data) {
           setStatus(data.phase);

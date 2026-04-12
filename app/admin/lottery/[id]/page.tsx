@@ -9,6 +9,7 @@ import {
   getDoc,
   getDocs,
   collection,
+  serverTimestamp,
 } from "firebase/firestore";
 import { db } from "@/app/lib/firebase";
 
@@ -30,18 +31,7 @@ export default function LotteryPage() {
   }>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const updatePhase = async (phase: string) => {
-    if (!quizId) return;
 
-    try {
-      await updateDoc(doc(db, "quizzes", quizId, "state", "current"), {
-        phase: phase,
-      });
-    } catch (error) {
-      console.error("更新エラー:", error);
-      setErrorMessage("通信エラーが発生しました。もう一度お試しください。");
-    }
-  };
 
   const startLottery = async () => {
     if (!quizId) return;
@@ -90,10 +80,10 @@ export default function LotteryPage() {
         bride: brideWinner?.name || "該当者なし",
       };
 
-      // ⑤ Firestore保存
-      await updateDoc(ref, { phase: "lottery" });
-      await new Promise((r) => setTimeout(r, 300));
-      await updateDoc(ref, { winners: resultData, phase: "winner" });
+      // ⑤ Firestore保存（ドキドキ演出のため5秒待機）
+      await updateDoc(ref, { phase: "lottery", displayUpdatedAt: serverTimestamp() });
+      await new Promise((r) => setTimeout(r, 5000));
+      await updateDoc(ref, { winners: resultData, phase: "winner", displayUpdatedAt: serverTimestamp() });
 
       // ⑥ UI反映
       setResult(resultData);
@@ -169,10 +159,8 @@ export default function LotteryPage() {
           )}
           <button
             style={styles.actionButton}
-            onClick={async () => {
+            onClick={() => {
               if (!quizId) return;
-
-              await updatePhase("closed");
               router.push(`/admin/${quizId}`);
             }}
           >
