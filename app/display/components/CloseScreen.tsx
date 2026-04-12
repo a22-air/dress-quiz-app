@@ -1,9 +1,9 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 
 export default function ClosedScreen() {
-  const [sparkles] = useState<
+  const [sparkles, setSparkles] = useState<
     {
       id: number;
       x: number;
@@ -11,15 +11,19 @@ export default function ClosedScreen() {
       delay: number;
       size: number;
     }[]
-  >(() =>
-    Array.from({ length: 24 }, (_, i) => ({
-      id: i,
-      x: Math.random() * 100,
-      y: Math.random() * 100,
-      delay: Math.random() * 4,
-      size: Math.random() * 10 + 6,
-    }))
-  );
+  >([]);
+
+  useEffect(() => {
+    setSparkles(
+      Array.from({ length: 24 }, (_, i) => ({
+        id: i,
+        x: Math.random() * 100,
+        y: Math.random() * 100,
+        delay: Math.random() * 4,
+        size: Math.random() * 10 + 6,
+      }))
+    );
+  }, []);
   return (
     <div style={styles.page}>
 
