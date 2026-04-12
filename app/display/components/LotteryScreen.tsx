@@ -85,6 +85,7 @@ export default function LotteryScreen({ quizId }: Props) {
   >([]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSparkles(
       Array.from({ length: 24 }, (_, i) => ({
         id: i,

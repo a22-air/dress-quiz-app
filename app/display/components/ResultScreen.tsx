@@ -33,6 +33,7 @@ export default function ResultScreen({ quizId }: Props) {
   >([]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSparkles(
       Array.from({ length: 20 }, (_, i) => ({
         id: i,
