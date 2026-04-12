@@ -1,25 +1,87 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
+import { doc, onSnapshot } from "firebase/firestore"
+import { db } from "@/app/lib/firebase"
 
-export default function LotteryScreen() {
-  const [visible, setVisible] = useState(true)
+type Props = {
+  quizId: string;
+};
+
+const ITEM_HEIGHT = 88;
+const TAPE_COUNT = 20; // ランダム名の枚数
+
+type SlotProps = {
+  names: string[];
+};
+
+function Slot({ names }: SlotProps) {
+  const [started, setStarted] = useState(false);
+
+  const pool = names.length > 0 ? names : ["？"];
+
+  const tape = useMemo(() => {
+    return Array.from(
+      { length: TAPE_COUNT },
+      () => pool[Math.floor(Math.random() * pool.length)]
+    );
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [names.join(",")]);
+
+  const totalScroll = (TAPE_COUNT - 1) * ITEM_HEIGHT;
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setVisible((prev) => !prev)
-    }, 500)
-    return () => clearInterval(interval)
-  }, [])
+    const t1 = setTimeout(() => setStarted(true), 80);
+    return () => {
+      clearTimeout(t1);
+    };
+  }, []);
+
+  return (
+    <div style={slotWindow}>
+      {/* 上下のグラデーションマスク */}
+      <div style={maskTop} />
+      <div style={maskBottom} />
+      {/* 中央ハイライトライン */}
+      <div style={highlightLine} />
+
+      <div
+        style={{
+          transform: started ? `translateY(-${totalScroll}px)` : "translateY(0px)",
+          transition: started ? `transform 4.5s cubic-bezier(0.05, 0, 0.12, 1)` : "none",
+        }}
+      >
+        {tape.map((name, i) => (
+          <div
+            key={i}
+            style={{
+              height: ITEM_HEIGHT,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontFamily: "'Cormorant Garamond', serif",
+              fontSize: "clamp(28px, 3.2vw, 48px)",
+              fontWeight: 300,
+              letterSpacing: "0.12em",
+              color: "#ffffff",
+            }}
+          >
+            {name}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export default function LotteryScreen({ quizId }: Props) {
+  const [groomNames, setGroomNames] = useState<string[]>([]);
+  const [brideNames, setBrideNames] = useState<string[]>([]);
+  const [ready, setReady] = useState(false);
+  const [fading, setFading] = useState(false);
 
   const [sparkles, setSparkles] = useState<
-    {
-      id: number;
-      x: number;
-      y: number;
-      delay: number;
-      size: number;
-    }[]
+    { id: number; x: number; y: number; delay: number; size: number }[]
   >([]);
 
   useEffect(() => {
@@ -33,6 +95,33 @@ export default function LotteryScreen() {
       }))
     );
   }, []);
+
+  useEffect(() => {
+    if (!quizId) return;
+
+    const unsub = onSnapshot(
+      doc(db, "quizzes", quizId, "state", "current"),
+      (snap) => {
+        if (!snap.exists()) return;
+        const data = snap.data();
+
+        if (data.lotteryUsers) {
+          setGroomNames(data.lotteryUsers.groom || []);
+          setBrideNames(data.lotteryUsers.bride || []);
+          setReady(true);
+        }
+      }
+    );
+
+    return () => unsub();
+  }, [quizId]);
+
+  // ready になったタイミング（スロット開始）から 3.3s 後にフェードアウト開始
+  useEffect(() => {
+    if (!ready) return;
+    const t = setTimeout(() => setFading(true), 3300);
+    return () => clearTimeout(t);
+  }, [ready]);
 
   return (
     <div style={styles.page}>
@@ -50,26 +139,20 @@ export default function LotteryScreen() {
           50% { box-shadow: 0 0 60px rgba(201,168,76,0.3), 0 0 120px rgba(201,168,76,0.1); }
         }
         @keyframes fade-up {
-          from { opacity: 0; transform: translateY(30px); }
+          from { opacity: 0; transform: translateY(20px); }
           to { opacity: 1; transform: translateY(0); }
         }
-        @keyframes spin-ring {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-        @keyframes counter-spin {
-          from { transform: translate(-50%, -50%) rotate(0deg); }
-          to { transform: translate(-50%, -50%) rotate(-360deg); }
+        @keyframes winner-glow {
+          0%, 100% { text-shadow: 0 0 40px rgba(240,217,138,0.5); }
+          50% { text-shadow: 0 0 80px rgba(240,217,138,0.9), 0 0 120px rgba(240,217,138,0.4); }
         }
         @keyframes shimmer {
-          0%, 100% { opacity: 0.7; }
+          0%, 100% { opacity: 0.6; }
           50% { opacity: 1; }
         }
 
-        .main-card { animation: fade-up 1s ease forwards, pulse-glow 4s ease-in-out infinite; }
-        .spin-ring { animation: spin-ring 2s linear infinite; }
-        .counter-text { animation: counter-spin 2s linear infinite; }
-        .shimmer-text { animation: shimmer 1.5s ease-in-out infinite; }
+        .main-card { animation: fade-up 0.6s ease both, pulse-glow 4s ease-in-out infinite; }
+        .label-shimmer { animation: shimmer 2s ease-in-out infinite; }
       `}</style>
 
       {/* スパークル */}
@@ -97,13 +180,10 @@ export default function LotteryScreen() {
       <div style={{ ...styles.corner, top: 32, right: 32, borderWidth: "2px 2px 0 0" }} />
       <div style={{ ...styles.corner, bottom: 32, left: 32, borderWidth: "0 0 2px 2px" }} />
       <div style={{ ...styles.corner, bottom: 32, right: 32, borderWidth: "0 2px 2px 0" }} />
-
-      {/* 左右縦ライン */}
       <div style={styles.sideLineLeft} />
       <div style={styles.sideLineRight} />
 
       <div className="main-card" style={styles.card}>
-
         {/* 上部オーナメント */}
         <div style={styles.topOrnament}>
           <div style={styles.ornamentLineLong} />
@@ -113,47 +193,96 @@ export default function LotteryScreen() {
           <div style={{ ...styles.ornamentLineLong, transform: "scaleX(-1)" }} />
         </div>
 
-        {/* スピナー */}
-        <div style={styles.spinnerWrap}>
-          <div className="spin-ring" style={styles.spinRing}>
-            <span
-              className="counter-text"
-              style={styles.spinInnerText}
-            >
-              ✦
-            </span>
-          </div>
-        </div>
-
-        {/* メインテキスト */}
-        <h1 className="shimmer-text" style={styles.mainTitle}>抽選中</h1>
+        {/* タイトル */}
+        <h1 className="label-shimmer" style={styles.mainTitle}>抽選中</h1>
         <p style={styles.mainTitleEn}><em>Drawing Now</em></p>
 
-        {/* ドキドキ点滅 */}
-        <div style={styles.blinkWrap}>
-          <span
-            style={{
-              ...styles.blinkText,
-              opacity: visible ? 1 : 0,
-              transition: "opacity 0.15s ease",
-            }}
-          >
-            ✦ &nbsp; ドキドキ &nbsp; ✦
-          </span>
-        </div>
+        {/* スロット */}
+        {ready ? (
+          <div style={styles.slotsRow}>
+            <div style={styles.slotColumn}>
+              <p style={styles.slotLabel}>新郎側 / Groom</p>
+              <Slot names={groomNames} />
+            </div>
+            <div style={styles.slotDivider} />
+            <div style={styles.slotColumn}>
+              <p style={styles.slotLabel}>新婦側 / Bride</p>
+              <Slot names={brideNames} />
+            </div>
+          </div>
+        ) : (
+          <div style={styles.waitingText}>
+            <p className="label-shimmer" style={styles.waitingLabel}>準備中...</p>
+          </div>
+        )}
 
         {/* 下部オーナメント */}
-        <div style={{ ...styles.topOrnament, marginTop: "56px", marginBottom: 0 }}>
+        <div style={{ ...styles.topOrnament, marginTop: "48px", marginBottom: 0 }}>
           <div style={styles.ornamentLineLong} />
           <div style={styles.ornamentDiamond} />
           <div style={styles.ornamentDiamond} />
           <div style={{ ...styles.ornamentLineLong, transform: "scaleX(-1)" }} />
         </div>
-
       </div>
+
+      {/* フェードアウト用ブラックオーバーレイ */}
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          background: "#000",
+          opacity: fading ? 1 : 0,
+          transition: fading ? "opacity 0.7s ease" : "none",
+          pointerEvents: "none",
+        }}
+      />
     </div>
-  )
+  );
 }
+
+// スロット窓スタイル
+const slotWindow: React.CSSProperties = {
+  width: "100%",
+  height: ITEM_HEIGHT,
+  overflow: "hidden",
+  position: "relative",
+  border: "1px solid rgba(201,168,76,0.3)",
+  background: "rgba(0,0,0,0.3)",
+};
+
+const maskTop: React.CSSProperties = {
+  position: "absolute",
+  top: 0,
+  left: 0,
+  right: 0,
+  height: "30%",
+  background: "linear-gradient(180deg, rgba(20,15,8,0.9), transparent)",
+  zIndex: 1,
+  pointerEvents: "none",
+};
+
+const maskBottom: React.CSSProperties = {
+  position: "absolute",
+  bottom: 0,
+  left: 0,
+  right: 0,
+  height: "30%",
+  background: "linear-gradient(0deg, rgba(20,15,8,0.9), transparent)",
+  zIndex: 1,
+  pointerEvents: "none",
+};
+
+const highlightLine: React.CSSProperties = {
+  position: "absolute",
+  top: "50%",
+  left: 0,
+  right: 0,
+  height: "1px",
+  background: "rgba(201,168,76,0.25)",
+  transform: "translateY(-50%)",
+  zIndex: 2,
+  pointerEvents: "none",
+};
 
 const styles: { [key: string]: React.CSSProperties } = {
   page: {
@@ -193,19 +322,19 @@ const styles: { [key: string]: React.CSSProperties } = {
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
-    padding: "72px 120px",
+    padding: "64px 100px",
     border: "1px solid rgba(201,168,76,0.2)",
     background: "rgba(255,255,255,0.02)",
     backdropFilter: "blur(4px)",
-    maxWidth: "900px",
     width: "88%",
+    maxWidth: "1000px",
     position: "relative",
   },
   topOrnament: {
     display: "flex",
     alignItems: "center",
     gap: "20px",
-    marginBottom: "48px",
+    marginBottom: "32px",
     width: "100%",
     justifyContent: "center",
   },
@@ -232,58 +361,64 @@ const styles: { [key: string]: React.CSSProperties } = {
     textTransform: "uppercase",
     whiteSpace: "nowrap",
   },
-  spinnerWrap: {
-    marginBottom: "40px",
-    position: "relative",
-    width: "100px",
-    height: "100px",
-  },
-  spinRing: {
-    width: "100px",
-    height: "100px",
-    border: "1px solid rgba(201,168,76,0.2)",
-    borderTop: "1px solid #c9a84c",
-    borderRadius: "50%",
-    position: "relative",
-  },
-  spinInnerText: {
-    position: "absolute",
-    top: "50%",
-    left: "50%",
-    fontSize: "24px",
-    color: "rgba(201,168,76,0.6)",
-  },
   mainTitle: {
     fontFamily: "'Cormorant Garamond', serif",
-    fontSize: "clamp(56px, 8vw, 108px)" as unknown as string,
+    fontSize: "clamp(40px, 5vw, 72px)" as unknown as string,
     fontWeight: 300,
     color: "#f0d98a",
     letterSpacing: "0.2em",
+    marginBottom: "8px",
     textAlign: "center",
-    marginBottom: "12px",
   },
   mainTitleEn: {
     fontFamily: "'Cormorant Garamond', serif",
-    fontSize: "clamp(18px, 2vw, 28px)" as unknown as string,
+    fontSize: "clamp(14px, 1.6vw, 24px)" as unknown as string,
     fontWeight: 300,
-    fontStyle: "italic",
     color: "rgba(240,217,138,0.4)",
     letterSpacing: "0.25em",
+    marginBottom: "40px",
     textAlign: "center",
-    marginBottom: "0",
   },
-  blinkWrap: {
-    marginTop: "40px",
-    height: "48px",
+  slotsRow: {
+    display: "flex",
+    alignItems: "center",
+    width: "100%",
+    gap: "0px",
+  },
+  slotColumn: {
+    flex: 1,
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: "16px",
+  },
+  slotLabel: {
+    fontFamily: "'Zen Kaku Gothic New', sans-serif",
+    fontSize: "clamp(11px, 1.1vw, 16px)" as unknown as string,
+    fontWeight: 300,
+    color: "rgba(201,168,76,0.6)",
+    letterSpacing: "0.25em",
+    textAlign: "center",
+  },
+  slotDivider: {
+    width: "1px",
+    height: "120px",
+    background: "linear-gradient(180deg, transparent, rgba(201,168,76,0.3), transparent)",
+    margin: "0 48px",
+    flexShrink: 0,
+  },
+  waitingText: {
+    height: "120px",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
+    width: "100%",
   },
-  blinkText: {
+  waitingLabel: {
     fontFamily: "'Zen Kaku Gothic New', sans-serif",
-    fontSize: "clamp(18px, 2vw, 30px)" as unknown as string,
+    fontSize: "14px",
     fontWeight: 300,
-    color: "rgba(201,168,76,0.7)",
-    letterSpacing: "0.4em",
+    color: "rgba(201,168,76,0.4)",
+    letterSpacing: "0.3em",
   },
-}
+};

@@ -80,10 +80,22 @@ export default function LotteryPage() {
         bride: brideWinner?.name || "該当者なし",
       };
 
-      // ⑤ Firestore保存（ドキドキ演出のため5秒待機）
-      await updateDoc(ref, { phase: "lottery", displayUpdatedAt: serverTimestamp() });
-      await new Promise((r) => setTimeout(r, 5000));
-      await updateDoc(ref, { winners: resultData, phase: "winner", displayUpdatedAt: serverTimestamp() });
+      // ⑤ Firestore保存（スロット演出のため5秒待機）
+      await updateDoc(ref, {
+        phase: "lottery",
+        displayUpdatedAt: serverTimestamp(),
+        lotteryUsers: {
+          groom: groomUsers.map((u) => u.name),
+          bride: brideUsers.map((u) => u.name),
+        },
+        // winners はここでは保存しない（スロット中に結果がわからないように）
+      });
+      await new Promise((r) => setTimeout(r, 4000));
+      await updateDoc(ref, {
+        phase: "winner",
+        displayUpdatedAt: serverTimestamp(),
+        winners: resultData, // 発表と同時に保存
+      });
 
       // ⑥ UI反映
       setResult(resultData);

@@ -60,7 +60,7 @@ export default function DisplayPage() {
   const screen = () => {
     if (status === "closed") return <ClosedScreen />;
     if (status === "result") return <ResultScreen quizId={quizId} />;
-    if (status === "lottery") return <LotteryScreen />;
+    if (status === "lottery") return <LotteryScreen quizId={quizId} />;
     if (status === "winner") return <WinnerScreen quizId={quizId} />;
     return <div>準備中...</div>;
   };
