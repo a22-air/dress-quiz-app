@@ -6,6 +6,7 @@ import { doc, updateDoc, collection, getDocs } from "firebase/firestore";
 import { db } from "@/app/lib/firebase";
 import { getDoc } from "firebase/firestore";
 import { useParams } from "next/navigation";
+import Toast from "@/app/components/Toast";
 
 type Vote = {
   name: string;
@@ -20,6 +21,7 @@ export default function ResultPage() {
   const [wrongUsers, setWrongUsers] = useState<Vote[]>([]);
   const [correctAnswer, setCorrectAnswer] = useState("");
   const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const params = useParams();
   const quizId = params.id as string;
@@ -27,9 +29,14 @@ export default function ResultPage() {
   const updatePhase = async (phase: string) => {
     if (!quizId) return;
 
-    await updateDoc(doc(db, "quizzes", quizId, "state", "current"), {
-      phase: phase,
-    });
+    try {
+      await updateDoc(doc(db, "quizzes", quizId, "state", "current"), {
+        phase: phase,
+      });
+    } catch (error) {
+      console.error("更新エラー:", error);
+      setErrorMessage("通信エラーが発生しました。もう一度お試しください。");
+    }
   };
 
   useEffect(() => {
@@ -107,6 +114,9 @@ export default function ResultPage() {
 
   return (
     <div style={styles.container}>
+      {errorMessage && (
+        <Toast message={errorMessage} onClose={() => setErrorMessage(null)} />
+      )}
       <div style={styles.ornament}>
         <div style={styles.ornamentLine} />
         <div style={styles.ornamentDiamond} />

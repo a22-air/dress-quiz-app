@@ -24,6 +24,7 @@ export default function VotePage() {
   const [loading, setLoading] = useState(true);
   const [isVotingOpen, setIsVotingOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState(false);
 
   const params = useParams();
   const quizId = params.id as string;
@@ -112,7 +113,14 @@ export default function VotePage() {
     }
 
     if (isSubmitting) return;
+
+    if (!navigator.onLine) {
+      setSubmitError(true);
+      return;
+    }
+
     setIsSubmitting(true);
+    setSubmitError(false);
 
     try {
       const votesRef = collection(db, "quizzes", quizId, "votes");
@@ -136,7 +144,7 @@ export default function VotePage() {
       setSubmitted(true);
     } catch (e) {
       console.error("送信エラー:", e);
-      alert("送信に失敗しました");
+      setSubmitError(true);
     } finally {
       setIsSubmitting(false);
     }
@@ -299,6 +307,13 @@ export default function VotePage() {
         <button style={isSubmitting ? { ...styles.submitButton, ...styles.submitButtonDisabled } : styles.submitButton} onClick={handleSubmit} disabled={isSubmitting}>
           ✦ 投票する ✦
         </button>
+
+        {submitError && (
+          <div style={styles.errorBox}>
+            <p style={styles.errorText}>通信エラーが発生しました</p>
+            <p style={styles.errorSubText}>もう一度「投票する」を押してください</p>
+          </div>
+        )}
       </div>
 
       <div style={styles.footerOrnament}>
@@ -475,6 +490,29 @@ const styles: { [key: string]: React.CSSProperties } = {
   submitButtonDisabled: {
     opacity: 0.5,
     cursor: "not-allowed" as const,
+  },
+  errorBox: {
+    marginTop: "16px",
+    padding: "14px 16px",
+    background: "rgba(80,20,20,0.06)",
+    border: "1px solid rgba(200,80,80,0.25)",
+    textAlign: "center" as const,
+  },
+  errorText: {
+    fontFamily: "'Zen Kaku Gothic New', sans-serif",
+    fontSize: "12px",
+    fontWeight: 300,
+    color: "#b05050",
+    letterSpacing: "0.1em",
+    marginBottom: "4px",
+  },
+  errorSubText: {
+    fontFamily: "'Zen Kaku Gothic New', sans-serif",
+    fontSize: "11px",
+    fontWeight: 300,
+    color: "#b05050",
+    letterSpacing: "0.08em",
+    opacity: 0.8,
   },
   footerOrnament: {
     marginTop: "40px",

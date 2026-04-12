@@ -3,12 +3,14 @@
 import { useRouter, useParams } from "next/navigation";
 import { doc, updateDoc } from "firebase/firestore";
 import { db } from "@/app/lib/firebase";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import Toast from "@/app/components/Toast";
 
 export default function AdminPage() {
   const router = useRouter();
   const params = useParams();
   const quizId = params.id as string;
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const updatePhase = async (phase: string) => {
     if (!quizId) return;
@@ -19,6 +21,7 @@ export default function AdminPage() {
       });
     } catch (error) {
       console.error("更新エラー:", error);
+      setErrorMessage("通信エラーが発生しました。もう一度お試しください。");
     }
   };
 
@@ -42,6 +45,9 @@ export default function AdminPage() {
 
   return (
     <>
+      {errorMessage && (
+        <Toast message={errorMessage} onClose={() => setErrorMessage(null)} />
+      )}
       <div style={styles.container}>
         <div style={styles.ornament}>
           <div style={styles.ornamentLine} />
