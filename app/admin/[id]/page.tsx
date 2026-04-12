@@ -2,6 +2,8 @@
 
 import { useRouter, useParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "@/app/lib/firebase";
 import Toast from "@/app/components/Toast";
 
 export default function AdminPage() {
@@ -11,18 +13,38 @@ export default function AdminPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    const isAuthed = sessionStorage.getItem("admin-auth");
+    if (!quizId) return;
 
+    const sessionKey = `admin-auth-${quizId}`;
+    const isAuthed = sessionStorage.getItem(sessionKey);
     if (isAuthed === "true") return;
 
-    const password = prompt("パスワードを入力してください");
+    const checkPassword = async () => {
+      const snap = await getDoc(doc(db, "quizzes", quizId, "state", "current"));
+      const adminPassword = snap.exists() ? snap.data().adminPassword : null;
 
-    if (password === process.env.NEXT_PUBLIC_ADMIN_PASSWORD) {
-      sessionStorage.setItem("admin-auth", "true");
-    } else {
-      alert("パスワードが違います");
-    }
-  }, [router]);
+      while (true) {
+        const input = prompt("パスワードを入力してください");
+
+        // キャンセル押した場合
+        if (input === null) {
+          router.push("/");
+          return;
+        }
+
+        // 正解
+        if (input && adminPassword && input === adminPassword) {
+          sessionStorage.setItem(sessionKey, "true");
+          return;
+        }
+
+        // 不正解
+        alert("パスワードが違います");
+      }
+    };
+
+    checkPassword();
+  }, [quizId, router]);
 
   if (!quizId) {
     return <div>読み込み中...</div>;
